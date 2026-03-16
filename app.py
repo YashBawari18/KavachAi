@@ -499,11 +499,29 @@ def load_css():
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 try:
     load_css()
-    # Hide Streamlit deploy button & top-right menu
+    # Hide Streamlit deploy button & top-right menu, but ensure header is visible for sidebar toggle
     st.markdown("""
         <style>
             .stDeployButton, [data-testid="stToolbar"] {
                 display: none !important;
+            }
+            header, [data-testid="stHeader"] {
+                visibility: visible !important;
+                display: block !important;
+                height: auto !important;
+            }
+            [data-testid="stSidebar"] {
+                display: flex;
+            }
+            /* Styling for our HUD Exit Button */
+            .hud-exit-btn button {
+                border-color: #ff2a2a !important;
+                color: #ff2a2a !important;
+            }
+            .hud-exit-btn button:hover {
+                background-color: #ff2a2a !important;
+                color: #000 !important;
+                box-shadow: 0 0 20px #ff2a2a !important;
             }
         </style>
     """, unsafe_allow_html=True)
@@ -709,6 +727,16 @@ with st.sidebar:
     st.caption("KAVACH AI v2.0 - Next-Gen SecOps")
 
 # ── Cyber-Ops HUD (Heads-Up Display) ──────────────────────────────────────────
+top_hud_col1, top_hud_col2 = st.columns([4, 1])
+with top_hud_col1:
+    st.markdown("### 🌐 CYBER-OPS DASHBOARD")
+with top_hud_col2:
+    st.markdown("<div class='hud-exit-btn'>", unsafe_allow_html=True)
+    if st.button(tr("🚪 EXIT COMMAND CENTRE"), use_container_width=True):
+        st.session_state.show_landing = True
+        st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
+
 hud_col1, hud_col2, hud_col3, hud_col4 = st.columns([1,1,1,1])
 with hud_col1:
     st.metric(label=tr("SYSTEM STATUS"), value="ONLINE", delta="99.9% Uptime")
