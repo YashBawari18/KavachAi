@@ -707,13 +707,17 @@ with st.sidebar:
     st.markdown("---")
     st.caption("KAVACH AI v2.0 - Next-Gen SecOps")
 
-# ── Main Header ───────────────────────────────────────────────────────────────
-st.title(tr("🛡️ KAVACH — AI Cybersecurity Operations Centre"))
-status_msg = tr("● ONLINE  |  SCANNING ACTIVE  |  ALL SYSTEMS READY")
-st.markdown(
-    f"<span class='scanning-text' style='font-size:16px;'>{status_msg}</span>",
-    unsafe_allow_html=True,
-)
+# ── Cyber-Ops HUD (Heads-Up Display) ──────────────────────────────────────────
+hud_col1, hud_col2, hud_col3, hud_col4 = st.columns([1,1,1,1])
+with hud_col1:
+    st.metric(label=tr("SYSTEM STATUS"), value="ONLINE", delta="99.9% Uptime")
+with hud_col2:
+    st.metric(label=tr("LATENCY"), value="14ms", delta="-2ms")
+with hud_col3:
+    st.metric(label=tr("ACTIVE NODES"), value="1,242", delta="+12")
+with hud_col4:
+    st.metric(label=tr("THREAT LEVEL"), value="MODERATE", delta="STABLE", delta_color="off")
+
 st.markdown("---")
 
 # ── Real-Time Threat Alerts ──────────────────────────────────────────────────
@@ -770,32 +774,36 @@ if "realtime_alerts" not in st.session_state or time.time() - st.session_state.g
 
 alerts = st.session_state.realtime_alerts
 
-alerts_container = st.container()
-with alerts_container:
-    st.subheader(tr("🔔 Real-Time Threat Alerts"))
-    
-    # Build the alerts HTML
-    alerts_html = '<div style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;">'
-    for a in alerts:
-        alerts_html += f"""<div style="background:rgba(10,15,25,0.85);border-left:4px solid {a['color']};border-radius:8px;padding:12px 18px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 12px rgba(0,0,0,0.4);animation:alertSlideIn 0.5s ease;"><div style="font-size:28px; min-width:36px; text-align:center;">{a['icon']}</div><div style="flex:1;"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;"><span style="color:{a['color']}; font-weight:800; font-size:13px; font-family:'Orbitron',sans-serif; letter-spacing:2px;">{a['severity']}</span><span style="color:#586069; font-size:12px; font-family:'Rajdhani',sans-serif;">🕐 {a['time']}  •  {a['source']}</span></div><div style="color:#c9d1d9; font-size:14px; font-family:'Rajdhani',sans-serif; line-height:1.4;">{tr(a['msg'])}</div></div></div>"""
-    alerts_html += "</div>"
-    alerts_html += """
-    <style>
-        @keyframes alertSlideIn {
-            from { opacity: 0; transform: translateX(-20px); }
-            to   { opacity: 1; transform: translateX(0); }
-        }
-    </style>
-    """
-    st.markdown(alerts_html, unsafe_allow_html=True)
+# ── Dashboard Layout ──────────────────────────────────────────────────────────
+main_col, side_info_col = st.columns([3, 1])
 
-# Refresh button
-col_refresh, col_spacer = st.columns([1, 5])
-with col_refresh:
-    if st.button(tr("🔄 Refresh Alerts")):
-        st.session_state.realtime_alerts = generate_realtime_alerts(5)
-        st.session_state.alert_last_refresh = time.time()
-        st.rerun()
+with main_col:
+    # ── Real-Time Trend Chart ─────────────────────────────────────────────────
+    st.subheader(tr("📈 GLOBAL THREAT TRENDS (24H)"))
+    chart_data = pd.DataFrame({
+        'time': pd.date_range(start='2026-03-15', periods=24, freq='H'),
+        'attacks': [random.randint(400, 1200) for _ in range(24)],
+        'blocked': [random.randint(350, 1150) for _ in range(24)]
+    })
+    st.area_chart(chart_data.set_index('time'), color=["#00f0ff", "#00ff41"])
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # ── Alert Grid ────────────────────────────────────────────────────────────
+    st.subheader(tr("🔔 TACTICAL ALERTS"))
+    alerts_html = '<div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:15px;">'
+    for a in alerts[:4]: # Show top 4 in grid
+        alerts_html += f"""
+            <div style="background:rgba(10,15,25,0.8); border-left:4px solid {a['color']}; border-radius:8px; padding:15px; box-shadow:0 4px 15px rgba(0,0,0,0.3);">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="color:{a['color']}; font-weight:800; font-size:12px; font-family:'Orbitron';">{a['severity']}</span>
+                    <span style="color:#586069; font-size:10px;">{a['time']}</span>
+                </div>
+                <div style="color:#e6edf3; font-size:13px; margin-top:8px;">{tr(a['msg'])}</div>
+            </div>
+        """
+    alerts_html += "</div>"
+    st.markdown(alerts_html, unsafe_allow_html=True)
 
 st.markdown("---")
 
@@ -871,13 +879,14 @@ if "last_result" in st.session_state:
     label = tr(risk_label(score))
 
     with col_result:
-        st.subheader(tr("📊 Risk Assessment"))
+        st.subheader(tr("📊 RISK INDEX"))
         st.markdown(
             f"""
             <div class="risk-meter-container">
-                <div style="font-size:70px; font-weight:900; color:{colour}; font-family:'Orbitron', sans-serif; text-shadow: 0 0 20px {colour};">{score}</div>
-                <div style="font-size:14px; color:#8b949e; letter-spacing:3px; margin-top:5px; font-weight:bold;">{tr('THREAT INDEX / 100')}</div>
-                <div style="font-size:24px; margin-top:15px; font-weight:700; color:{colour}; text-shadow: 0 0 10px {colour};">{label}</div>
+                <div style="position: absolute; width: 100%; height: 100%; border: 4px solid {colour}; border-radius: 50%; opacity: 0.2;"></div>
+                <div style="font-size:64px; font-weight:900; color:{colour}; font-family:'Orbitron', sans-serif; z-index:2;">{score}</div>
+                <div style="font-size:12px; color:#7d8590; letter-spacing:4px; font-weight:bold; z-index:2;">{tr('THREAT')}</div>
+                <div style="font-size:18px; margin-top:10px; font-weight:700; color:{colour}; z-index:2;">{label}</div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -925,6 +934,7 @@ if "last_result" in st.session_state:
             st.download_button(label=tr("⬇️ DOWNLOAD FULL REPORT (TXT)"), data=translated_report, file_name=fname, mime="text/plain", use_container_width=True)
 
     with tab_actions:
+        st.markdown("<br>", unsafe_allow_html=True)
         recs = result.get("recommendations", [])
         if recs:
             for i, rec in enumerate(recs, 1):
@@ -932,14 +942,14 @@ if "last_result" in st.session_state:
                 desc   = rec["description"] if isinstance(rec, dict) else rec.description
                 st.markdown(
                     f"""
-                    <div style="background:rgba(20,25,35,0.8); border-left:4px solid {colour};
-                                border-radius:6px; padding:20px; margin-bottom:15px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
-                        <div style="color:{colour}; font-weight:700; font-size:18px; font-family:'Orbitron', sans-serif;">
-                            {tr('Step')} {i}. {tr(action)}
-                        </div>
-                        <div style="color:#c9d1d9; font-size:15px; margin-top:10px; font-family:'Rajdhani', sans-serif;">
+                    <div style="background:rgba(10,15,25,0.6); border-left:4px solid {colour};
+                                border-radius:4px; padding:15px; margin-bottom:12px;">
+                        <span style="color:{colour}; font-weight:700; font-size:16px;">
+                            {i}. {tr(action)}
+                        </span>
+                        <p style="color:#7d8590; font-size:14px; margin:5px 0 0 0;">
                             {tr(desc)}
-                        </div>
+                        </p>
                     </div>
                     """,
                     unsafe_allow_html=True,
