@@ -198,3 +198,74 @@ div[data-testid="stChatMessage"]:nth-child(even) {
     background-color: rgba(0, 255, 65, 0.05);
     border-color: rgba(0, 255, 65, 0.2);
 }
+
+/* Floating Chatbot UI Customization */
+div[data-testid="stPopover"] {
+    position: fixed !important;
+    bottom: 30px;
+    right: 30px;
+    z-index: 99999;
+}
+
+div[data-testid="stPopover"] > button {
+    border-radius: 50% !important;
+    width: 70px !important;
+    height: 70px !important;
+    background: linear-gradient(135deg, var(--neon-cyan), var(--neon-green)) !important;
+    box-shadow: 0 0 20px var(--neon-cyan) !important;
+    border: none !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+}
+
+div[data-testid="stPopover"] > button:hover {
+    transform: scale(1.1) !important;
+    box-shadow: 0 0 35px var(--neon-green) !important;
+}
+
+/* Make Popover Body Look Cyberpunk */
+div[data-testid="stPopoverBody"] {
+    background: rgba(10, 15, 20, 0.95) !important;
+    backdrop-filter: blur(20px) !important;
+    border: 1px solid var(--neon-cyan) !important;
+    border-radius: 15px !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8) !important;
+    width: 350px !important;
+    max-height: 500px !important;
+}
+
+/* Hide the st.audio native audio player controls a bit */
+audio {
+    width: 100%;
+    margin-top: 10px;
+    border-radius: 8px;
+    filter: sepia(20%) hue-rotate(180deg) saturate(200%);
+}
+
+/* Responsive Design for All Devices */
+@media (max-width: 768px) {
+    div[data-testid="column"] {
+        width: 100% !important;
+        flex: 1 1 100% !important;
+        min-width: 100% !important;
+    }
+    
+    .risk-score-high, .risk-score-mid, .risk-score-low {
+        font-size: 3.5rem;
+    }
+    
+    h1 {
+        font-size: 1.8rem !important;
+    }
+    
+    div[data-testid="stPopover"] {
+        bottom: 20px;
+        right: 20px;
+    }
+    
+    div[data-testid="stPopoverBody"] {
+        width: 300px !important;
+    }
+}
