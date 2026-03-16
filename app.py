@@ -159,6 +159,16 @@ if st.session_state.show_landing:
                 z-index: 1001;
                 border-radius: 4px;
             }}
+            /* Responsive adjustments */
+            @media (max-width: 1200px) {{
+                .landing-metrics, .worldwide-test {{
+                    display: none !important;
+                }}
+                .landing-title h1 {{
+                    font-size: 2.5rem;
+                    letter-spacing: 8px;
+                }}
+            }}
             .test-line {{
                 font-size: 0.85rem;
                 color: #00f0ff;
@@ -179,7 +189,8 @@ if st.session_state.show_landing:
                 width: 100vw;
                 display: flex;
                 justify-content: center;
-                z-index: 3000;
+                z-index: 999999 !important;
+                pointer-events: none; /* Let clicks pass through the container */
             }}
             /* Premium Button Styling */
             .stButton > button {{
@@ -196,6 +207,7 @@ if st.session_state.show_landing:
                 transition: all 0.3s ease !important;
                 width: 300px !important;
                 height: 50px !important;
+                pointer-events: auto !important; /* But enable it for the button itself */
             }}
             .stButton > button:hover {{
                 background: #00f0ff !important;
@@ -229,9 +241,9 @@ if st.session_state.show_landing:
 
     # Three.js Visualization with Arcs, Glow, and Popping Testimonials
     st.components.v1.html("""
-        <div id="canvas-container" style="width: 100vw; height: 100vh; position: fixed; top: 0; left: 0;"></div>
+        <div id="canvas-container" style="width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; pointer-events: none;"></div>
         <div id="labels-container" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 1005;"></div>
-        <div id="metrics-overlay" style="position: fixed; top: 18%; left: 3%; z-index: 1001; display: flex; flex-direction: column; gap: 12px; width: 320px; font-family: 'Rajdhani', sans-serif;">
+        <div id="metrics-overlay" style="position: fixed; top: 18%; left: 3%; z-index: 1001; display: flex; flex-direction: column; gap: 12px; width: 320px; font-family: 'Rajdhani', sans-serif; pointer-events: none;">
             <div style="background: rgba(0, 20, 30, 0.7); border: 1px solid rgba(0, 240, 255, 0.2); border-left: 4px solid #00f0ff; padding: 12px 20px; backdrop-filter: blur(8px); box-shadow: 10px 0 30px rgba(0,0,0,0.5);">
                 <div style="font-size: 0.75rem; color: #586069; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 4px;">Global Connectivity</div>
                 <div style="font-size: 1.4rem; color: #00f0ff; font-weight: 800; display: flex; justify-content: space-between;"><span id="m-connectivity">99.99%</span> <span style="font-size: 0.8rem; color: #0f0;">• LIVE</span></div>
@@ -682,6 +694,11 @@ with st.sidebar:
     st.markdown("---")
     if st.button(tr("🗑️ Clear Logs")):
         st.session_state.threat_logs = []
+        st.rerun()
+
+    st.markdown("---")
+    if st.button(tr("🚪 EXIT COMMAND CENTRE")):
+        st.session_state.show_landing = True
         st.rerun()
 
     st.markdown("---")
