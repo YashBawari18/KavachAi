@@ -1,92 +1,200 @@
-/* Modern Cybersecurity Dashboard Styling */
+/* Crazy Cyberpunk / Modern Cybersecurity Dashboard Styling */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap');
 
 :root {
-    --bg-dark: #0a0e14;
-    --card-bg: #161b22;
+    --bg-dark: #050505;
+    --card-bg: rgba(20, 25, 35, 0.7);
     --neon-green: #00ff41;
-    --neon-yellow: #ffcc00;
-    --neon-red: #ff3131;
-    --text-primary: #e6edf3;
+    --neon-cyan: #00f0ff;
+    --neon-yellow: #ffea00;
+    --neon-red: #ff2a2a;
+    --text-primary: #f0f6fc;
     --text-secondary: #8b949e;
-    --border-color: #30363d;
+    --border-color: rgba(0, 255, 65, 0.3);
 }
 
 /* Global Changes */
 .main {
-    background-color: var(--bg-dark);
+    background-color: var(--bg-dark) !important;
+    background-image: 
+        radial-gradient(circle at 15% 50%, rgba(0, 255, 65, 0.05), transparent 25%),
+        radial-gradient(circle at 85% 30%, rgba(0, 240, 255, 0.05), transparent 25%);
     color: var(--text-primary);
-    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-family: 'Rajdhani', sans-serif;
 }
 
 h1, h2, h3 {
-    color: var(--neon-green) !important;
+    font-family: 'Orbitron', sans-serif;
+    color: var(--neon-cyan) !important;
     text-transform: uppercase;
     letter-spacing: 2px;
+    text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
 }
 
-/* Custom Card Effect */
+/* Custom Card Effect / Glassmorphism */
+div[data-testid="stVerticalBlock"] > div > div > div[data-testid="stVerticalBlock"] {
+    background: var(--card-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 8px 32px 0 rgba(0, 255, 65, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+div[data-testid="stVerticalBlock"] > div > div > div[data-testid="stVerticalBlock"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px 0 rgba(0, 255, 65, 0.2);
+    border-color: var(--neon-cyan);
+}
+
+/* Cyber Button Styling */
 div.stButton > button {
-    background-color: var(--neon-green);
-    color: var(--bg-dark);
-    border: none;
-    border-radius: 4px;
-    padding: 0.5rem 2rem;
-    font-weight: bold;
-    transition: all 0.3s ease;
+    background: transparent;
+    color: var(--neon-cyan);
+    border: 2px solid var(--neon-cyan);
+    border-radius: 8px;
+    padding: 0.6rem 2.5rem;
+    font-weight: 700;
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+}
+
+div.stButton > button::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0;
+    height: 0;
+    background: rgba(0, 240, 255, 0.2);
+    border-radius: 50%;
+    transition: width 0.4s ease, height 0.4s ease;
+}
+
+div.stButton > button:hover::before {
+    width: 300px;
+    height: 300px;
 }
 
 div.stButton > button:hover {
-    background-color: #00cc33;
-    box-shadow: 0 0 15px var(--neon-green);
-    color: white;
+    background-color: var(--neon-cyan);
+    box-shadow: 0 0 20px var(--neon-cyan), inset 0 0 10px rgba(255,255,255,0.5);
+    color: var(--bg-dark);
+    border-color: var(--neon-cyan);
+    transform: scale(1.05);
 }
 
 /* Sidebar Styling */
 section[data-testid="stSidebar"] {
-    background-color: var(--card-bg);
-    border-right: 1px solid var(--border-color);
+    background: linear-gradient(180deg, #0a0a0a 0%, #12161c 100%);
+    border-right: 1px solid rgba(0, 240, 255, 0.2);
+    box-shadow: 5px 0 25px rgba(0, 0, 0, 0.5);
+}
+
+/* Tab Styling */
+button[data-baseweb="tab"] {
+    background-color: transparent !important;
+    gap: 0;
+}
+button[data-baseweb="tab"] > div {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1rem;
+    color: var(--text-secondary);
+    padding: 10px 15px;
+    transition: 0.3s;
+}
+button[aria-selected="true"] > div {
+    color: var(--neon-green) !important;
+    text-shadow: 0 0 8px var(--neon-green);
+    border-bottom: 2px solid var(--neon-green);
 }
 
 /* Risk Score Visualization */
 .risk-meter-container {
-    background: var(--card-bg);
+    background: rgba(10, 15, 20, 0.8);
     border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 20px;
+    border-radius: 12px;
+    padding: 30px;
     text-align: center;
     margin-top: 10px;
+    position: relative;
+    overflow: hidden;
+}
+
+.risk-meter-container::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 50%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+    animation: scan-line 3s infinite linear;
+}
+
+@keyframes scan-line {
+    0% { left: -100%; }
+    100% { left: 200%; }
 }
 
 .risk-score-high {
     color: var(--neon-red);
-    font-size: 3rem;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 5rem;
     font-weight: 900;
-    text-shadow: 0 0 20px var(--neon-red);
+    text-shadow: 0 0 30px var(--neon-red), 0 0 10px var(--neon-red);
+    animation: pulse-red 1.5s infinite alternate;
 }
 
 .risk-score-mid {
     color: var(--neon-yellow);
-    font-size: 3rem;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 5rem;
     font-weight: 900;
-    text-shadow: 0 0 20px var(--neon-yellow);
+    text-shadow: 0 0 25px var(--neon-yellow);
 }
 
 .risk-score-low {
     color: var(--neon-green);
-    font-size: 3rem;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 5rem;
     font-weight: 900;
-    text-shadow: 0 0 20px var(--neon-green);
+    text-shadow: 0 0 25px var(--neon-green);
+}
+
+@keyframes pulse-red {
+    from { text-shadow: 0 0 20px var(--neon-red); transform: scale(1); }
+    to { text-shadow: 0 0 40px var(--neon-red), 0 0 60px red; transform: scale(1.05); }
 }
 
 /* Scanning Animation Simulation */
 @keyframes code-flicker {
-    0% { opacity: 0.1; }
-    50% { opacity: 1; }
-    100% { opacity: 0.1; }
+    0% { opacity: 0.3; text-shadow: none; }
+    50% { opacity: 1; text-shadow: 0 0 10px var(--neon-green); }
+    100% { opacity: 0.3; text-shadow: none; }
 }
 
 .scanning-text {
     color: var(--neon-green);
-    font-family: monospace;
-    animation: code-flicker 1.5s infinite;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.1rem;
+    font-weight: bold;
+    animation: code-flicker 2s infinite;
+}
+
+/* Chatbot Custom UI */
+div[data-testid="stChatMessage"] {
+    background-color: rgba(20, 25, 35, 0.5);
+    border: 1px solid rgba(0, 240, 255, 0.2);
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+div[data-testid="stChatMessage"]:nth-child(even) {
+    background-color: rgba(0, 255, 65, 0.05);
+    border-color: rgba(0, 255, 65, 0.2);
 }
