@@ -1,0 +1,16 @@
+{
+  "pythonVersion": "3.14",
+  "pythonPlatform": "Darwin",
+  "pythonPath": "/Library/Frameworks/Python.framework/Versions/3.14/bin/python3",
+  "extraPaths": [
+    ".",
+    "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages"
+  ],
+  "typeCheckingMode": "basic",
+  "reportMissingImports": false,
+  "reportMissingModuleSource": false,
+  "reportUnknownMemberType": false,
+  "reportUnknownVariableType": false,
+  "reportUnknownArgumentType": false,
+  "reportGeneralTypeIssues": false
+}

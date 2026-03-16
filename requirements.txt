@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+pydantic
+streamlit
+requests
+pandas
+python-dotenv
+# For detection logic later
