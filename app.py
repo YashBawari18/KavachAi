@@ -13,15 +13,18 @@ from deep_translator import GoogleTranslator
 # ── Environment Variables ─────────────────────────────────────────────────────
 API_URL = os.getenv("API_URL", "http://localhost:8000")
 
-# ── Logo Loading & Base64 ─────────────────────────────────────────────────────
+# ── Logo Loading & Base64 (Cached) ───────────────────────────────────────────
+@st.cache_data(show_spinner=False)
 def get_base64_image(image_path):
-    with open(image_path, "rb") as img_file:
-        return base64.b64encode(img_file.read()).decode()
+    try:
+        if os.path.exists(image_path):
+            with open(image_path, "rb") as img_file:
+                return base64.b64encode(img_file.read()).decode()
+    except Exception:
+        pass
+    return ""
 
-try:
-    LOGO_B64 = get_base64_image("logo.png")
-except Exception:
-    LOGO_B64 = ""
+LOGO_B64 = get_base64_image("logo.png")
 
 # ── Page Config ──────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -54,7 +57,7 @@ if not st.session_state.preloader_done:
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #0a0f14; z-index: 99999999; display: flex;
             flex-direction: column; align-items: center; justify-content: center;
-            animation: preloaderFadeOut 3s ease forwards;
+            animation: preloaderFadeOut 1s ease forwards; /* Shortened to 1s */
             pointer-events: none;
         }}
     </style>
