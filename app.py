@@ -173,11 +173,33 @@ if st.session_state.show_landing:
             }}
             .enter-btn-container {{
                 position: absolute;
-                top: 50%;
+                top: 60%;
                 left: 50%;
                 transform: translate(-50%, -50%);
                 z-index: 2000;
-                width: 300px;
+                width: auto;
+                text-align: center;
+            }}
+            /* Premium Button Styling */
+            .stButton > button {{
+                background: rgba(0, 240, 255, 0.05) !important;
+                color: #00f0ff !important;
+                border: 1px solid #00f0ff !important;
+                border-radius: 4px !important;
+                padding: 12px 40px !important;
+                font-family: 'Rajdhani', sans-serif !important;
+                font-weight: 800 !important;
+                letter-spacing: 3px !important;
+                text-transform: uppercase !important;
+                box-shadow: 0 0 20px rgba(0, 240, 255, 0.2) !important;
+                transition: all 0.3s ease !important;
+                width: 250px !important;
+            }}
+            .stButton > button:hover {{
+                background: #00f0ff !important;
+                color: #000 !important;
+                box-shadow: 0 0 40px #00f0ff !important;
+                transform: translateY(-2px) !important;
             }}
             /* Hide Streamlit elements completely */
             header, [data-testid="stHeader"], .stDeployButton, [data-testid="stToolbar"], footer, [data-testid="stFooter"] {{
@@ -201,26 +223,26 @@ if st.session_state.show_landing:
             <div class="test-line" style="animation-delay: 2s;">SHIELD [ASIA.IN.01] -> ACTIVE</div>
             <div class="test-line" style="animation-delay: 3s;">NODES [GLBL.72] -> SYNCHRONIZED</div>
         </div>
-        <div class="landing-metrics">
-            <div class="metric-box">
-                <div class="metric-label">Global Connectivity</div>
-                <div class="metric-value"><span>99.99%</span> <span style="font-size: 0.8rem; color: #0f0;">• LIVE</span></div>
-            </div>
-            <div class="metric-box">
-                <div class="metric-label">Neural Grid Sync</div>
-                <div class="metric-value">0.0003 ms</div>
-            </div>
-            <div class="metric-box">
-                <div class="metric-label">Threat Interception</div>
-                <div class="metric-value">4.2M / DAY</div>
-            </div>
-        </div>
     ''', unsafe_allow_html=True)
 
     # Three.js Visualization with Arcs, Glow, and Popping Testimonials
     st.components.v1.html("""
         <div id="canvas-container" style="width: 100vw; height: 100vh; position: fixed; top: 0; left: 0;"></div>
         <div id="labels-container" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 1005;"></div>
+        <div id="metrics-overlay" style="position: fixed; top: 18%; left: 3%; z-index: 1001; display: flex; flex-direction: column; gap: 12px; width: 320px; font-family: 'Rajdhani', sans-serif;">
+            <div style="background: rgba(0, 20, 30, 0.7); border: 1px solid rgba(0, 240, 255, 0.2); border-left: 4px solid #00f0ff; padding: 12px 20px; backdrop-filter: blur(8px); box-shadow: 10px 0 30px rgba(0,0,0,0.5);">
+                <div style="font-size: 0.75rem; color: #586069; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 4px;">Global Connectivity</div>
+                <div style="font-size: 1.4rem; color: #00f0ff; font-weight: 800; display: flex; justify-content: space-between;"><span id="m-connectivity">99.99%</span> <span style="font-size: 0.8rem; color: #0f0;">• LIVE</span></div>
+            </div>
+            <div style="background: rgba(0, 20, 30, 0.7); border: 1px solid rgba(0, 240, 255, 0.2); border-left: 4px solid #00f0ff; padding: 12px 20px; backdrop-filter: blur(8px); box-shadow: 10px 0 30px rgba(0,0,0,0.5);">
+                <div style="font-size: 0.75rem; color: #586069; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 4px;">Neural Grid Sync</div>
+                <div id="m-sync" style="font-size: 1.4rem; color: #00f0ff; font-weight: 800;">0.0003 ms</div>
+            </div>
+            <div style="background: rgba(0, 20, 30, 0.7); border: 1px solid rgba(0, 240, 255, 0.2); border-left: 4px solid #00f0ff; padding: 12px 20px; backdrop-filter: blur(8px); box-shadow: 10px 0 30px rgba(0,0,0,0.5);">
+                <div style="font-size: 0.75rem; color: #586069; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 4px;">Threat Interception</div>
+                <div id="m-threats" style="font-size: 1.4rem; color: #00f0ff; font-weight: 800;">4.2M / DAY</div>
+            </div>
+        </div>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
         <script>
             let scene, camera, renderer, earth, stars, arcs = [];
@@ -311,7 +333,21 @@ if st.session_state.show_landing:
                 earthGroup.position.y = -1.5;
                 camera.position.z = 6;
                 
+                // Spawn Testimonials
                 setInterval(() => spawnPopup(earthGroup), 2500);
+                
+                // Animate Metrics (Real-time fluctuations)
+                setInterval(updateMetrics, 1500);
+            }
+
+            function updateMetrics() {
+                const conn = (99.95 + Math.random() * 0.04).toFixed(2);
+                const sync = (0.0001 + Math.random() * 0.0003).toFixed(4);
+                const threats = (4.1 + Math.random() * 0.3).toFixed(1);
+                
+                document.getElementById('m-connectivity').innerText = conn + "%";
+                document.getElementById('m-sync').innerText = sync + " ms";
+                document.getElementById('m-threats').innerText = threats + "M / DAY";
             }
 
             function createArc(parent) {
