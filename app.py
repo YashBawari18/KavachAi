@@ -171,14 +171,15 @@ if st.session_state.show_landing:
                 0%, 100% {{ opacity: 0.3; }}
                 50% {{ opacity: 1; }}
             }}
-            .enter-btn-container {{
-                position: absolute;
-                top: 60%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                z-index: 2000;
-                width: auto;
-                text-align: center;
+            /* Centering the button container */
+            div.stButton {{
+                position: fixed;
+                bottom: 12%;
+                left: 0;
+                width: 100vw;
+                display: flex;
+                justify-content: center;
+                z-index: 3000;
             }}
             /* Premium Button Styling */
             .stButton > button {{
@@ -186,14 +187,15 @@ if st.session_state.show_landing:
                 color: #00f0ff !important;
                 border: 1px solid #00f0ff !important;
                 border-radius: 4px !important;
-                padding: 12px 40px !important;
+                padding: 12px 0 !important;
                 font-family: 'Rajdhani', sans-serif !important;
                 font-weight: 800 !important;
                 letter-spacing: 3px !important;
                 text-transform: uppercase !important;
                 box-shadow: 0 0 20px rgba(0, 240, 255, 0.2) !important;
                 transition: all 0.3s ease !important;
-                width: 250px !important;
+                width: 300px !important;
+                height: 50px !important;
             }}
             .stButton > button:hover {{
                 background: #00f0ff !important;
@@ -469,11 +471,9 @@ if st.session_state.show_landing:
     """, height=1000)
 
     # Entry Button (Centered)
-    st.markdown('<div class="enter-btn-container">', unsafe_allow_html=True)
-    if st.button("VIEW DASHBOARD", use_container_width=True):
+    if st.button("VIEW DASHBOARD"):
         st.session_state.show_landing = False
         st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
 
     # Stop rendering the rest of the file
     st.stop()
