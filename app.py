@@ -638,6 +638,7 @@ def risk_label(score: int) -> str:
     elif score > 0: return "🟡 LOW RISK"
     return "✅ SAFE"
 
+@st.cache_data(show_spinner=False)
 def text_to_speech(text: str, lang_code: str):
     """Generates an embedded audio HTML string for the voice assistant."""
     try:
@@ -836,7 +837,6 @@ with col_input:
             st.warning(tr("⚠️ Please paste some content or upload a file first."))
         else:
             with st.spinner(tr("🔎 Analysing threat patterns — please wait...")):
-                time.sleep(1.5)
                 try:
                     is_file_upload = uploaded_file is not None
 
