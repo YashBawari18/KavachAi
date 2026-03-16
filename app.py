@@ -7,6 +7,7 @@ from datetime import datetime
 from gtts import gTTS
 import base64
 import re
+from deep_translator import GoogleTranslator
 
 # ── Environment Variables ─────────────────────────────────────────────────────
 API_URL = os.getenv("API_URL", "http://localhost:8000")
@@ -28,76 +29,73 @@ try:
 except Exception:
     pass
 
-# ── Built-in Multilingual Dictionary ─────────────────────────────────────────
+# ── Comprehensive Multilingual Configuration ──────────────────────────────────
 LANG_OPTIONS = {
     "🇺🇸 English": "en",
     "🇮🇳 Hindi (हिंदी)": "hi",
+    "🇮🇳 Bengali (বাংলা)": "bn",
+    "🇮🇳 Telugu (తెలుగు)": "te",
+    "🇮🇳 Marathi (मराठी)": "mr",
+    "🇮🇳 Tamil (தமிழ்)": "ta",
+    "🇮🇳 Urdu (اردو)": "ur",
+    "🇮🇳 Gujarati (ગુજરાતી)": "gu",
+    "🇮🇳 Kannada (ಕನ್ನಡ)": "kn",
+    "🇮🇳 Malayalam (മലയാളം)": "ml",
+    "🇮🇳 Punjabi (ਪੰਜਾਬੀ)": "pa",
     "🇪🇸 Spanish (Español)": "es",
     "🇫🇷 French (Français)": "fr",
     "🇩🇪 German (Deutsch)": "de",
-    "🇨🇳 Chinese (中文)": "zh",
-    "🇸🇦 Arabic (عربي)": "ar"
-}
-
-LANG_DICT = {
-    "en": {},
-    "hi": {
-        "🛡️ KAVACH": "🛡️ कवच",
-        "🛡️ KAVACH — AI Cybersecurity Operations Centre": "🛡️ कवच — एआई साइबर सुरक्षा संचालन केंद्र",
-        "● ONLINE  |  SCANNING ACTIVE  |  ALL SYSTEMS READY": "● ऑनलाइन | स्कैनिंग सक्रिय | सभी सिस्टम तैयार",
-        "📋 Recent Threat Logs": "📋 हाल के थ्रेट लॉग",
-        "No scans yet. Run your first analysis!": "अभी तक कोई स्कैन नहीं। अपना पहला विश्लेषण चलाएं!",
-        "🗑️ Clear Logs": "🗑️ लॉग साफ़ करें",
-        "🔍 Threat Input Module": "🔍 थ्रेट इनपुट मॉड्यूल",
-        "Select what kind of content you want to analyse, paste the content or upload a file, then click RUN SECURITY ANALYSIS.": "चुनें कि आप किस सामग्री का विश्लेषण करना चाहते हैं, सामग्री पेस्ट करें या फ़ाइल अपलोड करें।",
-        "Select Threat Category": "थ्रेट श्रेणी चुनें",
-        "**— OR — Upload Audio, Video, or Image file for deepfake analysis:**": "**— या — डीपफेक विश्लेषण के लिए ऑडियो, वीडियो या छवि फ़ाइल अपलोड करें:**",
-        "Upload Media": "मीडिया अपलोड करें",
-        "Content to Analyse / Description": "विश्लेषण / विवरण के लिए सामग्री",
-        "🔬 RUN SECURITY ANALYSIS": "🔬 सुरक्षा विश्लेषण चलाएं",
-        "⚠️ Please paste some content or upload a file first.": "⚠️ कृपया पहले कुछ सामग्री पेस्ट करें या फ़ाइल अपलोड करें।",
-        "🔎 Analysing threat patterns — please wait...": "🔎 खतरे के पैटर्न का विश्लेषण किया जा रहा है — कृपया प्रतीक्षा करें...",
-        "✅ Analysis Complete! See results on the right →": "✅ विश्लेषण पूरा हुआ! दाईं ओर परिणाम देखें →",
-        "📊 Risk Assessment": "📊 जोखिम मूल्यांकन",
-        "THREAT INDEX / 100": "खतरा सूचकांक / 100",
-        "Threat Category": "थ्रेट श्रेणी",
-        "🔎 What Was Found": "🔎 क्या पाया गया",
-        "🧩 Suspicious Pattern Details": "🧩 संदिग्ध पैटर्न का विवरण",
-        "📄 Full Security Report": "📄 पूर्ण सुरक्षा रिपोर्ट",
-        "⬇️ DOWNLOAD FULL REPORT (TXT)": "⬇️ पूर्ण रिपोर्ट डाउनलोड करें (TXT)",
-        "🛡️ Recommended Actions": "🛡️ अनुशंसित कार्रवाइयां",
-        "Step": "कदम",
-        "💡 Safety Tips": "💡 सुरक्षा टिप्स",
-        "General protection guide enabled. Follow security best practices.": "सामान्य सुरक्षा मार्गदर्शिका सक्षम। सुरक्षा अभ्यास का पालन करें।",
-        "AI Assistant": "एआई सहायक",
-        "Ask me anything about cybersecurity! I can also speak to you.": "मुझसे साइबर सुरक्षा के बारे में कुछ भी पूछें! मैं आपसे बात भी कर सकता हूं।",
-        "Ask about cybersecurity, threats...": "साइबर सुरक्षा, खतरों के बारे में पूछें...",
-        "Hello! I am Kavach AI, your personal cybersecurity assistant. How can I protect you today?": "नमस्ते! मैं कवच एआई हूं, आपका व्यक्तिगत साइबर सुरक्षा सहायक। मैं आपकी सुरक्षा कैसे कर सकता हूं?",
-    },
-    "es": {
-        "🛡️ KAVACH — AI Cybersecurity Operations Centre": "🛡️ KAVACH — Centro de Operaciones de Ciberseguridad de IA",
-        "● ONLINE  |  SCANNING ACTIVE  |  ALL SYSTEMS READY": "● EN LÍNEA | ESCANEO ACTIVO | LISTO",
-        "🔍 Threat Input Module": "🔍 Módulo de Entrada de Amenazas",
-        "🔬 RUN SECURITY ANALYSIS": "🔬 EJECUTAR ANÁLISIS DE SEGURIDAD",
-        "✅ Analysis Complete! See results on the right →": "✅ Análisis Completo! Ver resultados a la derecha →",
-        "📊 Risk Assessment": "📊 Evaluación de Riesgos",
-        "Threat Category": "Categoría de Amenaza",
-        "🔎 What Was Found": "🔎 Lo que se encontró",
-        "🛡️ Recommended Actions": "🛡️ Acciones Recomendadas",
-        "AI Assistant": "Asistente de IA",
-        "Hello! I am Kavach AI, your personal cybersecurity assistant. How can I protect you today?": "¡Hola! Soy Kavach AI, tu asistente personal de ciberseguridad. ¿Cómo puedo protegerte hoy?",
-    },
-    # Simplified structure to fall back to English automatically if key missing
+    "🇨🇳 Chinese Simplified (简体中文)": "zh-CN",
+    "🇨🇳 Chinese Traditional (繁體中文)": "zh-TW",
+    "🇯🇵 Japanese (日本語)": "ja",
+    "🇷🇺 Russian (Русский)": "ru",
+    "🇸🇦 Arabic (العربية)": "ar",
+    "🇵🇹 Portuguese (Português)": "pt",
+    "🇮🇹 Italian (Italiano)": "it",
+    "🇰🇷 Korean (한국어)": "ko",
+    "🇹🇷 Turkish (Türkçe)": "tr",
+    "🇻🇳 Vietnamese (Tiếng Việt)": "vi",
+    "🇹🇭 Thai (ไทย)": "th",
+    "🇮🇩 Indonesian (Bahasa Indonesia)": "id",
+    "🇲🇾 Malay (Bahasa Melayu)": "ms",
+    "🇵🇭 Filipino (Tagalog)": "tl",
+    "🇳🇱 Dutch (Nederlands)": "nl",
+    "🇵🇱 Polish (Polski)": "pl",
+    "🇸🇪 Swedish (Svenska)": "sv",
+    "🇳🇴 Norwegian (Norsk)": "no",
+    "🇩🇰 Danish (Dansk)": "da",
+    "🇫🇮 Finnish (Suomi)": "fi",
+    "🇬🇷 Greek (Ελληνικά)": "el",
+    "🇨🇿 Czech (Čeština)": "cs",
+    "🇭🇺 Hungarian (Magyar)": "hu",
+    "🇷🇴 Romanian (Română)": "ro",
+    "🇮🇱 Hebrew (עברית)": "iw",
+    "🇮🇷 Persian (فارسی)": "fa",
+    "🇺🇦 Ukrainian (Українська)": "uk",
+    "🇰🇿 Kazakh (Қазақ тілі)": "kk",
+    "🇿🇦 Afrikaans (Afrikaans)": "af",
+    "🇳🇵 Nepali (नेपाली)": "ne",
+    "🇱🇰 Sinhala (සිංහල)": "si",
+    "🇲🇲 Burmese (မြန်မာ)": "my",
+    "🇰Ｈ Khmer (ខ្មែរ)": "km",
+    "🇱🇦 Lao (ลาว)": "lo"
 }
 
 @st.cache_data(show_spinner=False)
 def t(text: str, target_lang: str) -> str:
-    """Translates text to the target language dynamically using our internal dictionary."""
-    if target_lang == "en" or not text:
+    """Translates text to the target language dynamically using deep-translator."""
+    if not text or target_lang == "en":
         return text
+    
+    try:
+        # Normalize language codes that might differ between systems
+        if target_lang == "zh": target_lang = "zh-CN"
         
-    dict_for_lang = LANG_DICT.get(target_lang, {})
-    return dict_for_lang.get(text, text) # Fall back to english/key if missing
+        translated = GoogleTranslator(source='auto', target=target_lang).translate(text)
+        return translated if translated else text
+    except Exception as e:
+        # Fallback to key if translation fails
+        return text
 
 # ── Session State ─────────────────────────────────────────────────────────────
 if "threat_logs" not in st.session_state:
