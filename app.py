@@ -791,17 +791,15 @@ with main_col:
     
     # ── Alert Grid ────────────────────────────────────────────────────────────
     st.subheader(tr("🔔 TACTICAL ALERTS"))
-    alerts_html = '<div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:15px;">'
-    for a in alerts[:4]: # Show top 4 in grid
-        alerts_html += f"""
-            <div style="background:rgba(10,15,25,0.8); border-left:4px solid {a['color']}; border-radius:8px; padding:15px; box-shadow:0 4px 15px rgba(0,0,0,0.3);">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span style="color:{a['color']}; font-weight:800; font-size:12px; font-family:'Orbitron';">{a['severity']}</span>
-                    <span style="color:#586069; font-size:10px;">{a['time']}</span>
-                </div>
-                <div style="color:#e6edf3; font-size:13px; margin-top:8px;">{tr(a['msg'])}</div>
-            </div>
-        """
+    alerts_html = '<div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:15px; margin-bottom: 20px;">'
+    for a in alerts[:4]: 
+        alerts_html += f'<div style="background:rgba(10,15,25,0.8); border-left:4px solid {a["color"]}; border-radius:8px; padding:15px; box-shadow:0 4px 15px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05);">' \
+                       f'<div style="display:flex; justify-content:space-between; align-items:center;">' \
+                       f'<span style="color:{a["color"]}; font-weight:800; font-size:12px; font-family:\'Orbitron\';">{a["severity"]}</span>' \
+                       f'<span style="color:#586069; font-size:10px;">{a["time"]}</span>' \
+                       f'</div>' \
+                       f'<div style="color:#e6edf3; font-size:13px; margin-top:8px;">{tr(a["msg"])}</div>' \
+                       f'</div>'
     alerts_html += "</div>"
     st.markdown(alerts_html, unsafe_allow_html=True)
 
@@ -909,10 +907,9 @@ if "last_result" in st.session_state:
         st.markdown("<br>", unsafe_allow_html=True)
         st.subheader(tr("📊 SCAN METRICS"))
         
-        # Create a mock breakdown for the chart
+        # Fixed logic: ensure randint has a valid range
         categories = [tr("Malicious Code"), tr("Phishing Match"), tr("Metadata Anomaly"), tr("AI Generation")]
-        values = [random.randint(20, score) for _ in range(4)]
-        if score < 20: values = [5, 2, 8, 3] # Fallback for low scores
+        values = [random.randint(5, max(10, score)) for _ in range(4)]
         
         breakdown_df = pd.DataFrame({
             "Indicator": categories,
