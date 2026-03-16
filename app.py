@@ -12,13 +12,62 @@ from deep_translator import GoogleTranslator
 # ── Environment Variables ─────────────────────────────────────────────────────
 API_URL = os.getenv("API_URL", "http://localhost:8000")
 
+# ── Logo Loading & Base64 ─────────────────────────────────────────────────────
+def get_base64_image(image_path):
+    with open(image_path, "rb") as img_file:
+        return base64.b64encode(img_file.read()).decode()
+
+try:
+    LOGO_B64 = get_base64_image("logo.png")
+except Exception:
+    LOGO_B64 = ""
+
 # ── Page Config ──────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="KAVACH | AI Cybersecurity Dashboard",
-    page_icon="🛡️",
+    page_icon=f"data:image/png;base64,{LOGO_B64}" if LOGO_B64 else "🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# ── Preloader & Glitch Effect ────────────────────────────────────────────────
+if "preloader_done" not in st.session_state:
+    st.session_state.preloader_done = False
+
+if not st.session_state.preloader_done:
+    preloader_html = f"""
+    <div id="preloader" style="
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: #0a0f14; z-index: 99999999; display: flex;
+        flex-direction: column; align-items: center; justify-content: center;
+        transition: opacity 0.8s ease;
+    ">
+        <div class="glitch-container" style="position: relative;">
+            <img src="data:image/png;base64,{LOGO_B64}" style="width: 150px; filter: drop-shadow(0 0 20px #00f0ff);">
+            <div style="
+                margin-top: 20px; color: #00ff41; font-family: 'Orbitron', sans-serif;
+                letter-spacing: 5px; font-size: 24px; text-transform: uppercase;
+                animation: pulse 1.5s infinite;
+            ">Initiating KAVACH AI...</div>
+        </div>
+    </div>
+    <script>
+        setTimeout(() => {{
+            const preloader = document.getElementById('preloader');
+            preloader.style.opacity = '0';
+            setTimeout(() => {{ preloader.style.display = 'none'; }}, 800);
+        }}, 2500);
+    </script>
+    <style>
+        @keyframes pulse {{
+            0% {{ opacity: 0.4; transform: scale(0.95); }}
+            50% {{ opacity: 1; transform: scale(1); }}
+            100% {{ opacity: 0.4; transform: scale(0.95); }}
+        }}
+    </style>
+    """
+    st.markdown(preloader_html, unsafe_allow_html=True)
+    st.session_state.preloader_done = True
 
 # ── Load CSS ──────────────────────────────────────────────────────────────────
 def load_css():
@@ -26,6 +75,18 @@ def load_css():
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 try:
     load_css()
+    # Dynamic CSS override for the chatbot bridge icon
+    if LOGO_B64:
+        st.markdown(f"""
+            <style>
+                div[data-testid="stPopover"] button::before {{
+                    background-image: url("data:image/png;base64,{LOGO_B64}") !                 important;
+                    background-size: contain;
+                    background-repeat: no-repeat;
+                    background-position: center;
+                }}
+            </style>
+        """, unsafe_allow_html=True)
 except Exception:
     pass
 
@@ -180,7 +241,14 @@ def generate_bot_response(user_input: str) -> str:
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.image("https://img.icons8.com/nolan/96/shield.png", width=90)
+    if LOGO_B64:
+        st.markdown(f"""
+            <div style="text-align: center; margin-bottom: 20px;">
+                <img src="data:image/png;base64,{LOGO_B64}" style="width: 80px; filter: drop-shadow(0 0 10px var(--neon-cyan));">
+            </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.image("https://img.icons8.com/nolan/96/shield.png", width=90)
     st.title(tr("🛡️ KAVACH"))
     
     # Language Selector
@@ -370,7 +438,8 @@ else:
 
 
 # ── FLOATING CHATBOT (Bottom Right Voice Assistant) ───────────────────────────
-with st.popover("🤖", use_container_width=False):
+# We use an empty string as popover label because we'll style the button via CSS background
+with st.popover(" ", use_container_width=False):
     st.markdown(f"### 🛡️ Kavach {tr('AI Assistant')}")
     st.caption(tr("Ask me anything about cybersecurity! I can also speak to you."))
     
