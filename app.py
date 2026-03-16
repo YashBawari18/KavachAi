@@ -470,7 +470,7 @@ if st.session_state.show_landing:
 
     # Entry Button (Centered)
     st.markdown('<div class="enter-btn-container">', unsafe_allow_html=True)
-    if st.button("🚀 VIEW DASHBOARD", use_container_width=True):
+    if st.button("VIEW DASHBOARD", use_container_width=True):
         st.session_state.show_landing = False
         st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
