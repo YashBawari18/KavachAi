@@ -510,8 +510,13 @@ try:
                 display: block !important;
                 height: auto !important;
             }
+            /* Force sidebar visible on dashboard - overrides landing page hide */
+            section[data-testid="stSidebar"],
             [data-testid="stSidebar"] {
-                display: flex;
+                display: flex !important;
+                visibility: visible !important;
+                width: auto !important;
+                opacity: 1 !important;
             }
             /* Styling for our HUD Exit Button */
             .hud-exit-btn button {
@@ -592,20 +597,18 @@ LANG_OPTIONS = {
     "🇱🇦 Lao (ลาว)": "lo"
 }
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, ttl=3600)
 def t(text: str, target_lang: str) -> str:
-    """Translates text to the target language dynamically using deep-translator."""
+    """Translates text to the target language dynamically using deep-translator.
+    Results are cached for 1 hour (ttl=3600) to avoid repeated Google API calls.
+    """
     if not text or target_lang == "en":
         return text
-    
     try:
-        # Normalize language codes that might differ between systems
         if target_lang == "zh": target_lang = "zh-CN"
-        
         translated = GoogleTranslator(source='auto', target=target_lang).translate(text)
         return translated if translated else text
-    except Exception as e:
-        # Fallback to key if translation fails
+    except Exception:
         return text
 
 # ── Session State ─────────────────────────────────────────────────────────────
@@ -615,6 +618,8 @@ if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 if "lang_choice" not in st.session_state:
     st.session_state.lang_choice = "🇺🇸 English"
+if "dark_mode" not in st.session_state:
+    st.session_state.dark_mode = True
 
 def get_lang_code():
     return LANG_OPTIONS[st.session_state.lang_choice]
@@ -656,7 +661,7 @@ def risk_label(score: int) -> str:
     elif score > 0: return "🟡 LOW RISK"
     return "✅ SAFE"
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, ttl=3600)
 def text_to_speech(text: str, lang_code: str):
     """Generates an embedded audio HTML string for the voice assistant."""
     try:
@@ -701,7 +706,37 @@ with st.sidebar:
     else:
         st.image("https://img.icons8.com/nolan/96/shield.png", width=90)
     st.title(tr("🛡️ KAVACH"))
-    
+
+    # ── Day / Night Toggle ────────────────────────────────────────────────────
+    st.markdown("---")
+    is_dark = st.session_state.dark_mode
+    toggle_label = "🌙 Dark Mode" if is_dark else "☀️ Light Mode"
+    if st.toggle(toggle_label, value=is_dark, key="_dark_toggle"):
+        st.session_state.dark_mode = True
+    else:
+        st.session_state.dark_mode = False
+
+    # Apply theme CSS based on mode
+    if st.session_state.dark_mode:
+        st.markdown("""
+            <style>
+                .main { background-color: #050505 !important; color: #f0f6fc !important; }
+                section[data-testid="stSidebar"] { background: linear-gradient(180deg, #0a0a0a 0%, #12161c 100%) !important; }
+            </style>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown("""
+            <style>
+                .main { background-color: #f0f4f8 !important; color: #0d1117 !important; }
+                h1, h2, h3 { color: #00699e !important; text-shadow: none !important; }
+                section[data-testid="stSidebar"] { background: linear-gradient(180deg, #dce3ea 0%, #c8d0d9 100%) !important; }
+                .stApp { background: #f0f4f8 !important; }
+                p, span, label, div { color: #0d1117 !important; }
+            </style>
+        """, unsafe_allow_html=True)
+
+    st.markdown("---")
+
     # Language Selector
     st.selectbox("🌐 Language / 🌐 भाषा", list(LANG_OPTIONS.keys()), key="lang_choice")
     st.markdown("---")
@@ -793,6 +828,15 @@ def generate_realtime_alerts(n=5):
         alerts.append({**alert, "time": ts.strftime("%H:%M:%S")})
     alerts.sort(key=lambda x: x["time"], reverse=True)
     return alerts
+
+@st.cache_data(show_spinner=False, ttl=60)
+def get_cached_chart_data():
+    """Cache chart data for 60s — avoids regenerating on every widget interaction."""
+    return pd.DataFrame({
+        'time': pd.date_range(start='2026-03-15', periods=24, freq='h'),
+        'attacks': [random.randint(400, 1200) for _ in range(24)],
+        'blocked': [random.randint(350, 1150) for _ in range(24)]
+    })
 
 # Auto-refresh alerts every 8 seconds
 if "alert_tick" not in st.session_state:
