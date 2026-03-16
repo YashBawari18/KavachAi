@@ -373,7 +373,6 @@ else:
 
 
 # ── FLOATING CHATBOT (Bottom Right Voice Assistant) ───────────────────────────
-st.markdown("<div class='floating-chatbot-btn'>", unsafe_allow_html=True)
 with st.popover("🤖", use_container_width=False):
     st.markdown(f"### 🛡️ Kavach {tr('AI Assistant')}")
     st.caption(tr("Ask me anything about cybersecurity! I can also speak to you."))
@@ -403,7 +402,6 @@ with st.popover("🤖", use_container_width=False):
         reply = generate_bot_response(chat_input)
         st.session_state.chat_history.append({"role": "assistant", "content": reply})
         st.rerun()
-st.markdown("</div>", unsafe_allow_html=True)
 
 
 # ── Footer ────────────────────────────────────────────────────────────────────
