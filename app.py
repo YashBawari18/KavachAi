@@ -2,7 +2,13 @@ import streamlit as st
 import requests
 import time
 import pandas as pd
+import os
 from datetime import datetime
+
+# ── Environment Variables ─────────────────────────────────────────────────────
+# Allow deployment platforms to override the backend API URL
+API_URL = os.getenv("API_URL", "http://localhost:8000")
+
 
 # ── Page Config ──────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -196,10 +202,10 @@ with col_input:
                     if is_file_upload:
                         files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
                         data_payload = {"content_type": BACKEND_TYPE_MAP[input_type]}
-                        response = requests.post("http://localhost:8000/detect-file", data=data_payload, files=files, timeout=45)
+                        response = requests.post(f"{API_URL}/detect-file", data=data_payload, files=files, timeout=45)
                     else:
                         payload = {"content": user_input, "content_type": BACKEND_TYPE_MAP[input_type]}
-                        response = requests.post("http://localhost:8000/detect", json=payload, timeout=15)
+                        response = requests.post(f"{API_URL}/detect", json=payload, timeout=15)
 
                     if response.status_code == 200:
                         data = response.json()
