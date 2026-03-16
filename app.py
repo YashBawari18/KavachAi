@@ -34,6 +34,8 @@ st.set_page_config(
 # ── Preloader & Glitch Effect ────────────────────────────────────────────────
 if "preloader_done" not in st.session_state:
     st.session_state.preloader_done = False
+if "show_landing" not in st.session_state:
+    st.session_state.show_landing = True
 
 if not st.session_state.preloader_done:
     preloader_html = f"""
@@ -69,6 +71,376 @@ if not st.session_state.preloader_done:
     """
     st.markdown(preloader_html, unsafe_allow_html=True)
     st.session_state.preloader_done = True
+
+# ── 3D Landing Page ──────────────────────────────────────────────────────────
+if st.session_state.show_landing:
+    # Use a clean, full-screen background for the landing page
+    st.markdown(f"""
+        <style>
+            .stApp {{
+                background: radial-gradient(circle at center, #050a0f 0%, #000 100%);
+                overflow: hidden;
+            }}
+            [data-testid="stSidebar"] {{
+                display: none;
+            }}
+            .landing-title {{
+                position: absolute;
+                top: 3%;
+                left: 50%;
+                transform: translateX(-50%);
+                text-align: center;
+                z-index: 1001;
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }}
+            .landing-logo {{
+                width: 100px;
+                filter: drop-shadow(0 0 15px rgba(0, 240, 255, 0.6));
+                animation: pulseLogo 3s infinite alternate;
+            }}
+            @keyframes pulseLogo {{
+                from {{ transform: scale(1); opacity: 0.8; }}
+                to {{ transform: scale(1.1); opacity: 1; }}
+            }}
+            .landing-title h1 {{
+                font-family: 'Orbitron', sans-serif;
+                font-size: 3.5rem;
+                color: #00f0ff;
+                text-shadow: 0 0 30px rgba(0, 240, 255, 0.4);
+                margin: 0;
+                letter-spacing: 15px;
+            }}
+            .landing-metrics {{
+                position: absolute;
+                top: 18%;
+                left: 3%;
+                z-index: 1001;
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                width: 320px;
+            }}
+            .metric-box {{
+                background: rgba(0, 20, 30, 0.7);
+                border: 1px solid rgba(0, 240, 255, 0.2);
+                border-left: 4px solid #00f0ff;
+                padding: 12px 20px;
+                backdrop-filter: blur(8px);
+                box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+            }}
+            .metric-value {{
+                font-family: 'Rajdhani', sans-serif;
+                font-size: 1.4rem;
+                color: #00f0ff;
+                font-weight: 800;
+                display: flex;
+                justify-content: space-between;
+            }}
+            .metric-label {{
+                font-size: 0.75rem;
+                color: #586069;
+                text-transform: uppercase;
+                letter-spacing: 3px;
+                margin-bottom: 4px;
+            }}
+            .worldwide-test {{
+                position: absolute;
+                top: 18%;
+                right: 3%;
+                width: 280px;
+                background: rgba(0, 10, 15, 0.8);
+                border: 1px solid rgba(0, 240, 255, 0.1);
+                padding: 15px;
+                font-family: 'Rajdhani', sans-serif;
+                z-index: 1001;
+                border-radius: 4px;
+            }}
+            .test-line {{
+                font-size: 0.85rem;
+                color: #00f0ff;
+                margin-bottom: 5px;
+                border-left: 2px solid #00f0ff;
+                padding-left: 8px;
+                animation: fadeInOut 4s infinite;
+            }}
+            @keyframes fadeInOut {{
+                0%, 100% {{ opacity: 0.3; }}
+                50% {{ opacity: 1; }}
+            }}
+            .enter-btn-container {{
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                z-index: 2000;
+                width: 300px;
+            }}
+            /* Hide Streamlit elements completely */
+            header, [data-testid="stHeader"], .stDeployButton, [data-testid="stToolbar"], footer, [data-testid="stFooter"] {{
+                visibility: hidden !important;
+                display: none !important;
+                height: 0 !important;
+            }}
+        </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown(f'''
+        <div class="landing-title">
+            <img src="data:image/png;base64,{LOGO_B64}" class="landing-logo" alt="Logo">
+            <h1>KAVACH AI</h1>
+            <p style="color: #00f0ff; letter-spacing: 12px; font-family: 'Rajdhani'; font-weight: 800; opacity: 0.7;">CENTRAL COMMAND CENTRE</p>
+        </div>
+        <div class="worldwide-test">
+            <div style="color: #586069; font-size: 0.6rem; letter-spacing: 2px; margin-bottom: 10px;">WORLDWIDE DETECTION LOG</div>
+            <div class="test-line">PING [USA.VA.22] -> SUCCESS</div>
+            <div class="test-line" style="animation-delay: 1s;">TRACE [EU.GER.09] -> ENCRYPTED</div>
+            <div class="test-line" style="animation-delay: 2s;">SHIELD [ASIA.IN.01] -> ACTIVE</div>
+            <div class="test-line" style="animation-delay: 3s;">NODES [GLBL.72] -> SYNCHRONIZED</div>
+        </div>
+        <div class="landing-metrics">
+            <div class="metric-box">
+                <div class="metric-label">Global Connectivity</div>
+                <div class="metric-value"><span>99.99%</span> <span style="font-size: 0.8rem; color: #0f0;">• LIVE</span></div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-label">Neural Grid Sync</div>
+                <div class="metric-value">0.0003 ms</div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-label">Threat Interception</div>
+                <div class="metric-value">4.2M / DAY</div>
+            </div>
+        </div>
+    ''', unsafe_allow_html=True)
+
+    # Three.js Visualization with Arcs, Glow, and Popping Testimonials
+    st.components.v1.html("""
+        <div id="canvas-container" style="width: 100vw; height: 100vh; position: fixed; top: 0; left: 0;"></div>
+        <div id="labels-container" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 1005;"></div>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+        <script>
+            let scene, camera, renderer, earth, stars, arcs = [];
+            let labelsContainer = document.getElementById('labels-container');
+            let testimonials = [
+                "Kavach AI caught a phishing link! Saved $500.",
+                "Blocked a scam call from an unknown bot.",
+                "Scam site detected! My identity is safe.",
+                "Kavach AI prevented a credit card hack.",
+                "Fake giveaway flagged. Thank you Kavach!",
+                "Malicious attachment blocked. Life saver!",
+                "Kavach AI just saved my bank details!",
+                "Prevented a phishing scam on my work email."
+            ];
+            let activePopups = [];
+            
+            function init() {
+                scene = new THREE.Scene();
+                camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                renderer.setPixelRatio(window.devicePixelRatio);
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+                const earthGroup = new THREE.Group();
+                scene.add(earthGroup);
+
+                const geometry = new THREE.SphereGeometry(2.5, 64, 64);
+                const material = new THREE.MeshPhongMaterial({
+                    color: 0x050a0f,
+                    emissive: 0x001015,
+                    shininess: 50,
+                    transparent: true,
+                    opacity: 0.9
+                });
+                
+                earth = new THREE.Mesh(geometry, material);
+                earthGroup.add(earth);
+
+                const wireframe = new THREE.WireframeGeometry(geometry);
+                const lineMaterial = new THREE.LineBasicMaterial({ color: 0x00f0ff, transparent: true, opacity: 0.1 });
+                const line = new THREE.LineSegments(wireframe, lineMaterial);
+                earthGroup.add(line);
+
+                const atmosphereGeo = new THREE.SphereGeometry(2.7, 64, 64);
+                const atmosphereMat = new THREE.ShaderMaterial({
+                    uniforms: {},
+                    vertexShader: `
+                        varying vec3 vNormal;
+                        void main() {
+                            vNormal = normalize( normalMatrix * normal );
+                            gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+                        }
+                    `,
+                    fragmentShader: `
+                        varying vec3 vNormal;
+                        void main() {
+                            float intensity = pow( 0.6 - dot( vNormal, vec3( 0, 0, 1.0 ) ), 2.0 );
+                            gl_FragColor = vec4( 0.0, 0.9, 1.0, 1.0 ) * intensity;
+                        }
+                    `,
+                    side: THREE.BackSide,
+                    blending: THREE.AdditiveBlending,
+                    transparent: true
+                });
+                const atmosphere = new THREE.Mesh(atmosphereGeo, atmosphereMat);
+                earthGroup.add(atmosphere);
+
+                for(let i=0; i<15; i++) {
+                    createArc(earthGroup);
+                }
+
+                scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+                const sun = new THREE.DirectionalLight(0xffffff, 1);
+                sun.position.set(5, 3, 5);
+                scene.add(sun);
+
+                const starGeo = new THREE.BufferGeometry();
+                const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.5 });
+                const starPoints = [];
+                for(let i=0; i<8000; i++) {
+                    starPoints.push((Math.random()-0.5)*1500, (Math.random()-0.5)*1500, (Math.random()-0.5)*1500);
+                }
+                starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPoints, 3));
+                stars = new THREE.Points(starGeo, starMat);
+                scene.add(stars);
+
+                earthGroup.position.y = -1.5;
+                camera.position.z = 6;
+                
+                setInterval(() => spawnPopup(earthGroup), 2500);
+            }
+
+            function createArc(parent) {
+                const lat1 = (Math.random() - 0.5) * Math.PI;
+                const lon1 = (Math.random() - 0.5) * Math.PI * 2;
+                const lat2 = (Math.random() - 0.5) * Math.PI;
+                const lon2 = (Math.random() - 0.5) * Math.PI * 2;
+
+                const r = 2.5;
+                const start = new THREE.Vector3().setFromSphericalCoords(r, lat1, lon1);
+                const end = new THREE.Vector3().setFromSphericalCoords(r, lat2, lon2);
+
+                const mid = start.clone().lerp(end, 0.5);
+                mid.normalize().multiplyScalar(r * 1.5);
+
+                const curve = new THREE.QuadraticBezierCurve3(start, mid, end);
+                const points = curve.getPoints(50);
+                const arcGeo = new THREE.BufferGeometry().setFromPoints(points);
+                const arcMat = new THREE.LineBasicMaterial({ color: 0x00f0ff, transparent: true, opacity: 0.4 });
+                const arc = new THREE.Line(arcGeo, arcMat);
+                parent.add(arc);
+
+                const packetGeo = new THREE.SphereGeometry(0.04, 8, 8);
+                const packetMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+                const packet = new THREE.Mesh(packetGeo, packetMat);
+                parent.add(packet);
+
+                arcs.push({ curve, packet, t: Math.random() });
+            }
+
+            function spawnPopup(parent) {
+                const lat = (Math.random() - 0.5) * Math.PI;
+                const lon = (Math.random() - 0.5) * Math.PI * 2;
+                const pos = new THREE.Vector3().setFromSphericalCoords(2.5, lat, lon);
+                
+                const div = document.createElement('div');
+                div.style.position = 'absolute';
+                div.style.background = 'rgba(0, 240, 255, 0.15)';
+                div.style.border = '1px solid #00f0ff';
+                div.style.color = '#fff';
+                div.style.padding = '8px 12px';
+                div.style.borderRadius = '20px';
+                div.style.fontSize = '12px';
+                div.style.fontFamily = 'Rajdhani, sans-serif';
+                div.style.backdropFilter = 'blur(5px)';
+                div.style.whiteSpace = 'nowrap';
+                div.style.pointerEvents = 'none';
+                div.style.boxShadow = '0 0 15px rgba(0, 240, 255, 0.3)';
+                div.style.opacity = '0';
+                div.style.transition = 'opacity 0.5s, transform 0.5s';
+                div.style.transform = 'scale(0.5) translate(-50%, -50%)';
+                
+                div.innerText = "🛡️ " + testimonials[Math.floor(Math.random() * testimonials.length)];
+                labelsContainer.appendChild(div);
+                
+                setTimeout(() => {
+                    div.style.opacity = '1';
+                    div.style.transform = 'scale(1) translate(-50%, -50%)';
+                }, 50);
+
+                let popup = { 
+                    div, 
+                    pos: pos.clone(), 
+                    parent,
+                    startTick: Date.now() 
+                };
+                activePopups.push(popup);
+                
+                setTimeout(() => {
+                    div.style.opacity = '0';
+                    div.style.transform = 'scale(0.5) translate(-50%, -100%)';
+                    setTimeout(() => {
+                        labelsContainer.removeChild(div);
+                        activePopups = activePopups.filter(p => p !== popup);
+                    }, 500);
+                }, 4000);
+            }
+
+            function animate() {
+                requestAnimationFrame(animate);
+                earth.rotation.y += 0.002;
+                stars.rotation.y += 0.0001;
+                
+                arcs.forEach(a => {
+                    a.t += 0.005;
+                    if(a.t > 1) a.t = 0;
+                    const pos = a.curve.getPointAt(a.t);
+                    a.packet.position.copy(pos);
+                });
+
+                activePopups.forEach(p => {
+                    const worldPos = p.pos.clone().applyMatrix4(p.parent.matrixWorld);
+                    const screenPos = worldPos.project(camera);
+                    
+                    if (screenPos.z > 1) {
+                        p.div.style.display = 'none';
+                    } else {
+                        const x = (screenPos.x * 0.5 + 0.5) * window.innerWidth;
+                        const y = (screenPos.y * -0.5 + 0.5) * window.innerHeight;
+                        p.div.style.display = 'block';
+                        p.div.style.left = x + 'px';
+                        p.div.style.top = (y - 50) + 'px';
+                    }
+                });
+
+                renderer.render(scene, camera);
+            }
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+
+            init();
+            animate();
+        </script>
+        <style>body { margin: 0; overflow: hidden; background: transparent; }</style>
+    """, height=1000)
+
+    # Entry Button (Centered)
+    st.markdown('<div class="enter-btn-container">', unsafe_allow_html=True)
+    if st.button("🚀 VIEW DASHBOARD", use_container_width=True):
+        st.session_state.show_landing = False
+        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # Stop rendering the rest of the file
+    st.stop()
 
 # ── Load CSS ──────────────────────────────────────────────────────────────────
 def load_css():
