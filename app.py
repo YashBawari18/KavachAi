@@ -3,7 +3,8 @@ import requests
 import time
 import pandas as pd
 import os
-from datetime import datetime
+import random
+from datetime import datetime, timedelta
 from gtts import gTTS
 import base64
 import re
@@ -36,13 +37,27 @@ if "preloader_done" not in st.session_state:
 
 if not st.session_state.preloader_done:
     preloader_html = f"""
-    <div id="preloader" style="
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: #0a0f14; z-index: 99999999; display: flex;
-        flex-direction: column; align-items: center; justify-content: center;
-        transition: opacity 0.8s ease;
-    ">
-        <div class="glitch-container" style="position: relative;">
+    <style>
+        @keyframes preloaderFadeOut {{
+            0%   {{ opacity: 1; visibility: visible; }}
+            70%  {{ opacity: 1; visibility: visible; }}
+            100% {{ opacity: 0; visibility: hidden; }}
+        }}
+        @keyframes pulse {{
+            0%   {{ opacity: 0.4; transform: scale(0.95); }}
+            50%  {{ opacity: 1; transform: scale(1); }}
+            100% {{ opacity: 0.4; transform: scale(0.95); }}
+        }}
+        .kavach-preloader {{
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #0a0f14; z-index: 99999999; display: flex;
+            flex-direction: column; align-items: center; justify-content: center;
+            animation: preloaderFadeOut 3s ease forwards;
+            pointer-events: none;
+        }}
+    </style>
+    <div class="kavach-preloader">
+        <div style="position: relative; text-align: center;">
             <img src="data:image/png;base64,{LOGO_B64}" style="width: 150px; filter: drop-shadow(0 0 20px #00f0ff);">
             <div style="
                 margin-top: 20px; color: #00ff41; font-family: 'Orbitron', sans-serif;
@@ -51,20 +66,6 @@ if not st.session_state.preloader_done:
             ">Initiating KAVACH AI...</div>
         </div>
     </div>
-    <script>
-        setTimeout(() => {{
-            const preloader = document.getElementById('preloader');
-            preloader.style.opacity = '0';
-            setTimeout(() => {{ preloader.style.display = 'none'; }}, 800);
-        }}, 2500);
-    </script>
-    <style>
-        @keyframes pulse {{
-            0% {{ opacity: 0.4; transform: scale(0.95); }}
-            50% {{ opacity: 1; transform: scale(1); }}
-            100% {{ opacity: 0.4; transform: scale(0.95); }}
-        }}
-    </style>
     """
     st.markdown(preloader_html, unsafe_allow_html=True)
     st.session_state.preloader_done = True
@@ -75,12 +76,20 @@ def load_css():
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 try:
     load_css()
+    # Hide Streamlit deploy button & top-right menu
+    st.markdown("""
+        <style>
+            .stDeployButton, [data-testid="stToolbar"] {
+                display: none !important;
+            }
+        </style>
+    """, unsafe_allow_html=True)
     # Dynamic CSS override for the chatbot bridge icon
     if LOGO_B64:
         st.markdown(f"""
             <style>
                 div[data-testid="stPopover"] button::before {{
-                    background-image: url("data:image/png;base64,{LOGO_B64}") !                 important;
+                    background-image: url("data:image/png;base64,{LOGO_B64}") !important;
                     background-size: contain;
                     background-repeat: no-repeat;
                     background-position: center;
@@ -277,6 +286,89 @@ st.markdown(
     f"<span class='scanning-text' style='font-size:16px;'>{status_msg}</span>",
     unsafe_allow_html=True,
 )
+st.markdown("---")
+
+# ── Real-Time Threat Alerts ──────────────────────────────────────────────────
+REALTIME_ALERT_POOL = [
+    {"severity": "CRITICAL", "icon": "🚨", "color": "#ff2a2a", "source": "Kavach Firewall",
+     "msg": "Brute-force SSH attack detected from IP 185.220.101.xx — 2,400 attempts/min"},
+    {"severity": "CRITICAL", "icon": "🚨", "color": "#ff2a2a", "source": "Endpoint Shield",
+     "msg": "Ransomware signature (LockBit 3.0) detected on endpoint WS-FINANCE-07"},
+    {"severity": "HIGH", "icon": "🔴", "color": "#ff6b35", "source": "Email Gateway",
+     "msg": "Phishing campaign targeting HR department — 14 emails quarantined"},
+    {"severity": "HIGH", "icon": "🔴", "color": "#ff6b35", "source": "Network Monitor",
+     "msg": "Suspicious outbound traffic to C2 server 91.215.xx.xx on port 4443"},
+    {"severity": "HIGH", "icon": "🔴", "color": "#ff6b35", "source": "Threat Intel Feed",
+     "msg": "New zero-day exploit CVE-2026-1847 actively exploited in the wild"},
+    {"severity": "MEDIUM", "icon": "🟠", "color": "#ff9100", "source": "WAF",
+     "msg": "SQL injection attempt blocked on /api/v2/users endpoint"},
+    {"severity": "MEDIUM", "icon": "🟠", "color": "#ff9100", "source": "Identity Guard",
+     "msg": "Anomalous login from new geo-location (Lagos, NG) for user admin@corp"},
+    {"severity": "MEDIUM", "icon": "🟠", "color": "#ff9100", "source": "DNS Shield",
+     "msg": "DNS tunneling pattern detected — possible data exfiltration attempt"},
+    {"severity": "LOW", "icon": "🟡", "color": "#ffea00", "source": "Vulnerability Scanner",
+     "msg": "3 packages with known CVEs found in production Node.js dependencies"},
+    {"severity": "LOW", "icon": "🟡", "color": "#ffea00", "source": "Access Control",
+     "msg": "Service account svc-backup granted elevated privileges — review recommended"},
+    {"severity": "CRITICAL", "icon": "🚨", "color": "#ff2a2a", "source": "DDoS Mitigation",
+     "msg": "Volumetric DDoS attack detected — 12 Gbps flood targeting primary gateway"},
+    {"severity": "HIGH", "icon": "🔴", "color": "#ff6b35", "source": "Deepfake Detector",
+     "msg": "AI-generated voice deepfake flagged in VoIP call to finance department"},
+    {"severity": "MEDIUM", "icon": "🟠", "color": "#ff9100", "source": "Cloud Monitor",
+     "msg": "S3 bucket policy changed to public access — potential data exposure"},
+    {"severity": "LOW", "icon": "🟡", "color": "#ffea00", "source": "Compliance Engine",
+     "msg": "TLS 1.0 connection detected from legacy client — deprecation warning"},
+    {"severity": "CRITICAL", "icon": "🚨", "color": "#ff2a2a", "source": "Malware Sandbox",
+     "msg": "Trojan dropper detected in email attachment — SHA256 matches APT29 toolkit"},
+]
+
+def generate_realtime_alerts(n=5):
+    """Generate n randomized real-time alerts with recent timestamps."""
+    now = datetime.now()
+    selected = random.sample(REALTIME_ALERT_POOL, min(n, len(REALTIME_ALERT_POOL)))
+    alerts = []
+    for i, alert in enumerate(selected):
+        ts = now - timedelta(seconds=random.randint(5, 120 + i * 30))
+        alerts.append({**alert, "time": ts.strftime("%H:%M:%S")})
+    alerts.sort(key=lambda x: x["time"], reverse=True)
+    return alerts
+
+# Auto-refresh alerts every 8 seconds
+if "alert_tick" not in st.session_state:
+    st.session_state.alert_tick = 0
+if "realtime_alerts" not in st.session_state or time.time() - st.session_state.get("alert_last_refresh", 0) > 8:
+    st.session_state.realtime_alerts = generate_realtime_alerts(5)
+    st.session_state.alert_last_refresh = time.time()
+
+alerts = st.session_state.realtime_alerts
+
+alerts_container = st.container()
+with alerts_container:
+    st.subheader(tr("🔔 Real-Time Threat Alerts"))
+    
+    # Build the alerts HTML
+    alerts_html = '<div style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;">'
+    for a in alerts:
+        alerts_html += f"""<div style="background:rgba(10,15,25,0.85);border-left:4px solid {a['color']};border-radius:8px;padding:12px 18px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 12px rgba(0,0,0,0.4);animation:alertSlideIn 0.5s ease;"><div style="font-size:28px; min-width:36px; text-align:center;">{a['icon']}</div><div style="flex:1;"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;"><span style="color:{a['color']}; font-weight:800; font-size:13px; font-family:'Orbitron',sans-serif; letter-spacing:2px;">{a['severity']}</span><span style="color:#586069; font-size:12px; font-family:'Rajdhani',sans-serif;">🕐 {a['time']}  •  {a['source']}</span></div><div style="color:#c9d1d9; font-size:14px; font-family:'Rajdhani',sans-serif; line-height:1.4;">{tr(a['msg'])}</div></div></div>"""
+    alerts_html += "</div>"
+    alerts_html += """
+    <style>
+        @keyframes alertSlideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+    </style>
+    """
+    st.markdown(alerts_html, unsafe_allow_html=True)
+
+# Refresh button
+col_refresh, col_spacer = st.columns([1, 5])
+with col_refresh:
+    if st.button(tr("🔄 Refresh Alerts")):
+        st.session_state.realtime_alerts = generate_realtime_alerts(5)
+        st.session_state.alert_last_refresh = time.time()
+        st.rerun()
+
 st.markdown("---")
 
 # ── Layout ────────────────────────────────────────────────────────────────────
