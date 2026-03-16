@@ -28,5 +28,5 @@ async def detect_file_threat(
     finally:
         await file.close()
 
-    result = detector.detect_file(file.filename, file_size, content_type)
+    result = detector.detect_file(file.filename, file_size, content_type, file_bytes)
     return result

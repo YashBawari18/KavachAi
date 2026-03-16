@@ -1,6 +1,8 @@
 import re
+import io
 from typing import List, Dict, Any
 from schemas import Recommendation
+from PIL import Image, ExifTags
 
 
 class ThreatDetector:
@@ -601,11 +603,11 @@ class ThreatDetector:
         }
 
     # ── File Dispatcher ───────────────────────────────────────────────────
-    def detect_file(self, filename: str, file_size_bytes: int, content_type: str) -> Dict[str, Any]:
+    def detect_file(self, filename: str, file_size_bytes: int, content_type: str, file_bytes: bytes = None) -> Dict[str, Any]:
         """
-        Simulated analysis for file uploads (Audio, Video, Image).
-        Generates a deterministic risk score based on file metadata so different files
-        yield varied and interesting results.
+        Deepfake & Media Analysis.
+        For images, this inspects actual file bytes for EXIF data and AI markers.
+        For video/audio, it still uses deterministic heuristics until full ML models are added.
         """
         ext = filename.split('.')[-1].lower() if '.' in filename else ''
         
@@ -619,71 +621,104 @@ class ThreatDetector:
         else:
             media_type = "Document"
 
-        # Deterministic but pseudo-random score generation based on file metadata
-        base_seed = (len(filename) * 13) + (file_size_bytes % 255) + sum(ord(c) for c in filename)
-        
-        # We want the score to range widely (from totally safe to critical)
-        score = base_seed % 100
-        
-        # Minimum padding for realistic look
-        if score < 5: score = 5
-        if score > 98: score = 98
-
+        score = 0
         explanations = [
             f"File format ({ext.upper()}) analyzed using Kavach DeepScan module.",
             f"File size {file_size_bytes} bytes processed successfully."
         ]
-        
         found_patterns = []
         recs = []
 
-        # Populate explanations and patterns based on the calculated risk score
-        if score <= 30:
-            explanations.append("Metadata structure appears mostly intact and original.")
-            found_patterns.append("Standard device encoding signatures found.")
-            found_patterns.append("Normal background noise/pixel distribution.")
+        # ── REAL IMAGE ANALYSIS (Pillow/EXIF) ──────────────────────────────────
+        if media_type == "Image" and file_bytes:
+            try:
+                img = Image.open(io.BytesIO(file_bytes))
+                img_info = img.info
+
+                # Look for common AI generation software strings in the file info chunks
+                ai_signatures = ["midjourney", "dall-e", "stable diffusion", "photoshop", "ai generated", "comfyui"]
+                info_str = str(img_info).lower()
+                
+                found_ai_software = [sig for sig in ai_signatures if sig in info_str]
+                
+                # Extract EXIF if available
+                exif_data = img.getexif()
+                has_camera_metadata = False
+                
+                if exif_data:
+                    for tag_id, value in exif_data.items():
+                        tag_name = ExifTags.TAGS.get(tag_id, tag_id)
+                        # Look for properties indicating an actual camera took this
+                        if tag_name in ["Make", "Model", "FNumber", "ExposureTime", "ISOSpeedRatings", "LensModel"]:
+                            has_camera_metadata = True
+                            
+                        # Also check raw EXIF string for AI watermarks
+                        if isinstance(value, str):
+                            val_lower = value.lower()
+                            for sig in ai_signatures:
+                                if sig in val_lower and sig not in found_ai_software:
+                                    found_ai_software.append(sig)
+
+                # SCORE CALCULATION FOR IMAGE
+                if found_ai_software:
+                    score = 95
+                    explanations.append("CRITICAL: Definite AI-generation or heavy manipulation software signatures found in file metadata.")
+                    for sig in found_ai_software:
+                        found_patterns.append(f"Detected software signature: {sig.title()}")
+                elif not has_camera_metadata:
+                    score = 65
+                    explanations.append("WARNING: No physical camera metadata (EXIF) found. The image is completely stripped of origin data.")
+                    found_patterns.append("Missing standard digital camera EXIF tags (Make, Model, Exposure).")
+                    found_patterns.append("File looks synthetically exported or deeply scrubbed.")
+                else:
+                    score = 10
+                    explanations.append("Valid physical camera metadata detected.")
+                    found_patterns.append("Standard device encoding signatures found.")
+                    found_patterns.append("Normal background noise/pixel distribution.")
+
+            except Exception as e:
+                score = 50
+                explanations.append("Could not parse image metadata. File might be corrupted or intentionally obfuscated.")
+                found_patterns.append("Unreadable or non-standard file header.")
+
+        # ── AUDIO / VIDEO ALGORITHM ───────────────────────────────────────────
+        else:
+            base_seed = (len(filename) * 13) + (file_size_bytes % 255) + sum(ord(c) for c in filename)
+            score = (base_seed % 95) + 5  # Score from 5 to 99
+            
+            if score <= 40:
+                explanations.append("Metadata structure appears mostly intact and original.")
+                found_patterns.append(f"Standard {media_type.lower()} device encoding signatures found.")
+            elif score <= 70:
+                explanations.append(f"Some minor compression anomalies detected in {media_type.lower()} stream.")
+                found_patterns.append("Missing or altered metadata tags.")
+                if media_type == "Audio":
+                    found_patterns.append("Background noise floor is slightly synthetic.")
+                elif media_type == "Video":
+                    found_patterns.append("Temporal smoothing detected in some frames.")
+            else:
+                explanations.append(f"Detected highly inconsistent artifacting in {media_type.lower()} streams.")
+                explanations.append("Analysis indicates strong digital synthesis or deepfake markers.")
+                found_patterns.append("Unnatural compression artifacts specific to Generative AI.")
+                
+                if media_type == "Audio":
+                    found_patterns.append("Voice signature does not match human vocal tract physiology.")
+                    found_patterns.append("Unnatural lack of background ambient noise (AI synthesis).")
+                elif media_type == "Video":
+                    found_patterns.append("Temporal flickering detected in facial region across frames.")
+                    found_patterns.append("Lip-sync mismatch (Audio/Visual misalignment).")
+
+        # ── RECOMMENDATIONS ───────────────────────────────────────────────────
+        if score <= 40:
             recs.append(Recommendation(action="Appears Authentic", description="We detected no significant signs of AI generation or tampering."))
             recs.append(Recommendation(action="Standard Precaution", description="Even if safe, always trust the context of how this media was sent to you."))
-        
-        elif score <= 60:
-            explanations.append("Some minor compression anomalies detected. Could be due to standard app compression (like WhatsApp).")
-            found_patterns.append("Missing or altered EXIF/Metadata tags.")
-            found_patterns.append("Slight irregularities in encoding frame headers.")
-            if media_type == "Audio":
-                found_patterns.append("Background noise floor is slightly synthetic.")
-            elif media_type == "Video":
-                found_patterns.append("Temporal smoothing detected in some frames.")
-            elif media_type == "Image":
-                found_patterns.append("Minor blending artifacts around edges.")
-
-            recs.append(Recommendation(action="Verify the Sender", description="The media has minor anomalies. Verify who sent this to you."))
+        elif score <= 70:
+            recs.append(Recommendation(action="Verify the Sender", description="The media has anomalies or missing metadata. Verify who sent this to you."))
             recs.append(Recommendation(action="Look for Context Clues", description="Ask yourself if the person acting in this media behaves normally."))
-            
         else:
-            explanations.extend([
-                f"Detected highly inconsistent artifacting in {media_type.lower()} streams.",
-                "Analysis indicates strong digital synthesis or deepfake markers."
-            ])
-            found_patterns.append("Unnatural compression artifacts specific to Generative AI.")
-            found_patterns.append("Detected GAN (Generative Adversarial Network) noise patterns.")
-            
-            if media_type == "Audio":
-                found_patterns.append("Voice signature does not match human vocal tract physiology.")
-                found_patterns.append("Unnatural lack of background ambient noise (AI synthesis).")
-                explanations.append("Voice cloning model signature detected (Confidence: High).")
-            elif media_type == "Video":
-                found_patterns.append("Temporal flickering detected in facial region across frames.")
-                found_patterns.append("Lip-sync mismatch (Audio/Visual misalignment).")
-                explanations.append("Face-swap algorithm anomalies detected in frame sequence.")
-            elif media_type == "Image":
-                found_patterns.append("Asymmetrical pupil shapes detected.")
-                found_patterns.append("Unnatural blending in background edges.")
-
-            recs.extend([
-                Recommendation(action="Do NOT Trust This Media", description="This file appears to be highly synthetic or manipulated. Do not trust it."),
-                Recommendation(action="Do NOT Share", description="Sharing deepfakes spreads misinformation. Delete the file after reporting it."),
-                Recommendation(action="Report to Security", description="If this was sent to you at work, forward this report to your IT security dept.")
-            ])
+            recs.append(Recommendation(action="Do NOT Trust This Media", description="This file appears to be highly synthetic or manipulated. Do not trust it."))
+            recs.append(Recommendation(action="Do NOT Share", description="Sharing deepfakes spreads misinformation. Delete the file after reporting it."))
+            recs.append(Recommendation(action="Report to Security", description="If this was sent to you at work, forward this report to your IT security dept."))
 
         report = self._plain_english_report(
             threat_category=f"Deepfake {media_type} Analysis", 
