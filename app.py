@@ -4,7 +4,6 @@ import time
 import pandas as pd
 import os
 from datetime import datetime
-from datetime import datetime
 from gtts import gTTS
 import base64
 import re
