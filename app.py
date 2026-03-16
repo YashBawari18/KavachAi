@@ -9,6 +9,8 @@ from gtts import gTTS
 import base64
 import re
 from deep_translator import GoogleTranslator
+import plotly.express as px
+import plotly.graph_objects as go
 
 # ── Environment Variables ─────────────────────────────────────────────────────
 API_URL = os.getenv("API_URL", "http://localhost:8000")
@@ -510,14 +512,6 @@ try:
                 display: block !important;
                 height: auto !important;
             }
-            /* Force sidebar visible on dashboard - overrides landing page hide */
-            section[data-testid="stSidebar"],
-            [data-testid="stSidebar"] {
-                display: flex !important;
-                visibility: visible !important;
-                width: auto !important;
-                opacity: 1 !important;
-            }
             /* Styling for our HUD Exit Button */
             .hud-exit-btn button {
                 border-color: #ff2a2a !important;
@@ -528,9 +522,10 @@ try:
                 color: #000 !important;
                 box-shadow: 0 0 20px #ff2a2a !important;
             }
+            }
         </style>
     """, unsafe_allow_html=True)
-    # Dynamic CSS override for the chatbot bridge icon
+    # Dynamic CSS override for the chatbot bridge icon + Responsive Global CSS
     if LOGO_B64:
         st.markdown(f"""
             <style>
@@ -540,8 +535,87 @@ try:
                     background-repeat: no-repeat;
                     background-position: center;
                 }}
+                /* Hide EVERYTHING inside the button (default arrow, text, etc.) to only show the logo */
+                div[data-testid="stPopover"] button * {{
+                    display: none !important;
+                }}
+                /* Make the button circular and logo cover it */
+                div[data-testid="stPopover"] button {{
+                    width: 60px !important;
+                    height: 60px !important;
+                    border-radius: 50% !important;
+                    padding: 0 !important;
+                    background-color: transparent !important;
+                }}
+                div[data-testid="stPopover"] button::before {{
+                    width: 100% !important;
+                    height: 100% !important;
+                    display: block;
+                    content: "";
+                }}
             </style>
         """, unsafe_allow_html=True)
+    st.markdown("""
+        <style>
+            /* --- Global Alignment & Responsiveness --- */
+            /* Center the main app container contents */
+            .stApp > header { background: rgba(0,0,0,0) !important; }
+            .block-container {
+                max-width: 1400px;
+                padding-top: 2rem;
+                padding-bottom: 2rem;
+            }
+            /* Smooth transitions for responsive layout */
+            [data-testid="stVerticalBlock"] > div {
+                transition: all 0.3s ease-in-out;
+            }
+            
+            /* Responsive adjustments for Tablets (max-width: 1024px) */
+            @media (max-width: 1024px) {
+                .block-container { padding: 1rem; }
+                /* Stack main and side info column */
+                div[data-testid="stHorizontalBlock"] { flex-direction: column !important; }
+                /* Make the HUD Top metrics wrap neatly */
+                div[data-testid="stMetric"] { background: rgba(10,15,25,0.6); padding: 10px; border-radius: 8px; border: 1px solid rgba(0, 240, 255, 0.2); }
+            }
+
+            /* Responsive adjustments for Mobile (max-width: 768px) */
+            @media (max-width: 768px) {
+                h1 { font-size: 1.8rem !important; }
+                h2 { font-size: 1.5rem !important; }
+                h3 { font-size: 1.2rem !important; text-align: center; }
+                .hud-exit-btn button { width: 100% !important; margin-top: 10px; }
+                /* Center metric values on mobile */
+                div[data-testid="stMetricValue"] { justify-content: center; }
+                div[data-testid="stMetricLabel"] { text-align: center; justify-content: center; }
+                div[data-testid="stMetricDelta"] { justify-content: center; }
+            }
+            
+            /* --- Custom Sidebar Log Cards --- */
+            .sidebar-log-card {
+                background: rgba(10, 15, 25, 0.6);
+                border-left: 3px solid #00f0ff;
+                border-radius: 4px;
+                padding: 10px;
+                margin-bottom: 8px;
+                font-family: 'Rajdhani', sans-serif;
+                font-size: 13px;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+                transition: transform 0.2s, box-shadow 0.2s;
+            }
+            .sidebar-log-card:hover {
+                transform: translateX(4px);
+                box-shadow: -4px 4px 15px rgba(0, 240, 255, 0.2);
+            }
+            .log-header {
+                display: flex;
+                justify-content: space-between;
+                color: #586069;
+                font-size: 11px;
+                margin-bottom: 4px;
+            }
+        </style>
+    """, unsafe_allow_html=True)
 except Exception:
     pass
 
@@ -743,8 +817,20 @@ with st.sidebar:
     
     st.subheader(tr("📋 Recent Threat Logs"))
     if st.session_state.threat_logs:
-        df_logs = pd.DataFrame(st.session_state.threat_logs)
-        st.dataframe(df_logs[["timestamp", "type", "score"]], hide_index=True)
+        logs_html = '<div style="max-height: 400px; overflow-y: auto; padding-right: 5px;">'
+        for log in reversed(st.session_state.threat_logs):  # Show newest first
+            color = risk_colour(log['score'])
+            logs_html += f"""
+                <div class="sidebar-log-card" style="border-left-color: {color};">
+                    <div class="log-header">
+                        <span>{log['timestamp']}</span>
+                        <span style="color: {color}; font-weight: bold;">{log['score']} RISK</span>
+                    </div>
+                    <div style="color: #e6edf3;">{tr(log['type'])}</div>
+                </div>
+            """
+        logs_html += '</div>'
+        st.markdown(logs_html, unsafe_allow_html=True)
     else:
         st.info(tr("No scans yet. Run your first analysis!"))
 
@@ -851,15 +937,106 @@ alerts = st.session_state.realtime_alerts
 main_col, side_info_col = st.columns([3, 1])
 
 with main_col:
-    # ── Real-Time Trend Chart ─────────────────────────────────────────────────
-    st.subheader(tr("📈 GLOBAL THREAT TRENDS (24H)"))
-    chart_data = pd.DataFrame({
-        'time': pd.date_range(start='2026-03-15', periods=24, freq='H'),
-        'attacks': [random.randint(400, 1200) for _ in range(24)],
-        'blocked': [random.randint(350, 1150) for _ in range(24)]
-    })
-    st.area_chart(chart_data.set_index('time'), color=["#00f0ff", "#00ff41"])
+    # ── CYBER WORLD MAP ───────────────────────────────────────────────────────
+    st.subheader(tr("🌍 GLOBAL THREAT ORIGINS"))
     
+    # Generate random threat data for the map
+    np_cities = [
+        {"city": "Moscow", "lat": 55.75, "lon": 37.61, "intensity": random.randint(50, 100)},
+        {"city": "Beijing", "lat": 39.90, "lon": 116.40, "intensity": random.randint(60, 100)},
+        {"city": "Pyongyang", "lat": 39.03, "lon": 125.75, "intensity": random.randint(40, 90)},
+        {"city": "Tehran", "lat": 35.68, "lon": 51.38, "intensity": random.randint(30, 80)},
+        {"city": "Lagos", "lat": 6.52, "lon": 3.37, "intensity": random.randint(20, 70)},
+        {"city": "São Paulo", "lat": -23.55, "lon": -46.63, "intensity": random.randint(30, 80)},
+        {"city": "New York", "lat": 40.71, "lon": -74.00, "intensity": random.randint(40, 90)},
+        {"city": "London", "lat": 51.50, "lon": -0.12, "intensity": random.randint(20, 70)},
+        {"city": "Frankfurt", "lat": 50.11, "lon": 8.68, "intensity": random.randint(30, 80)},
+        {"city": "Mumbai", "lat": 19.07, "lon": 72.87, "intensity": random.randint(40, 90)},
+        {"city": "Singapore", "lat": 1.35, "lon": 103.81, "intensity": random.randint(30, 80)},
+        {"city": "Sydney", "lat": -33.86, "lon": 151.20, "intensity": random.randint(20, 60)},
+    ]
+    map_df = pd.DataFrame(np_cities)
+    
+    fig_map = px.scatter_geo(
+        map_df, lat="lat", lon="lon", size="intensity", color="intensity",
+        color_continuous_scale=[(0, "#00f0ff"), (1, "#ff2a2a")],
+        hover_name="city", projection="equirectangular"
+    )
+    
+    fig_map.update_geos(
+        showland=True, landcolor="#0a0f14",
+        showocean=True, oceancolor="#020508",
+        showcountries=True, countrycolor="#1a2639",
+        bgcolor="#020508",
+        resolution=50
+    )
+    
+    fig_map.update_layout(
+        margin=dict(l=0, r=0, t=0, b=0),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        coloraxis_showscale=False,
+        height=400
+    )
+    
+    st.plotly_chart(fig_map, use_container_width=True, config={'displayModeBar': False})
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # ── CHARTS ROW ────────────────────────────────────────────────────────────
+    chart_col1, chart_col2 = st.columns(2)
+    
+    with chart_col1:
+        st.subheader(tr("📈 THREAT TRENDS (24H)"))
+        chart_data = pd.DataFrame({
+            'time': pd.date_range(start='2026-03-15', periods=24, freq='h'),
+            'attacks': [random.randint(400, 1200) for _ in range(24)],
+            'blocked': [random.randint(350, 1150) for _ in range(24)]
+        })
+        
+        fig_trend = go.Figure()
+        fig_trend.add_trace(go.Scatter(
+            x=chart_data['time'], y=chart_data['attacks'],
+            fill='tozeroy', mode='lines',
+            line={'color': '#ff2a2a', 'width': 2},
+            fillcolor='rgba(255, 42, 42, 0.2)',
+            name='Attacks'
+        ))
+        fig_trend.add_trace(go.Scatter(
+            x=chart_data['time'], y=chart_data['blocked'],
+            fill='tozeroy', mode='lines',
+            line={'color': '#00f0ff', 'width': 2},
+            fillcolor='rgba(0, 240, 255, 0.2)',
+            name='Blocked'
+        ))
+        fig_trend.update_layout(
+            margin={'l': 0, 'r': 0, 't': 10, 'b': 0}, height=250,
+            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+            xaxis={'showgrid': False, 'color': "#586069"},
+            yaxis={'showgrid': True, 'gridcolor': "#1a2639", 'color': "#586069"},
+            legend={'orientation': "h", 'yanchor': "bottom", 'y': 1.02, 'xanchor': "right", 'x': 1, 'font': {'color': "#00f0ff"}}
+        )
+        st.plotly_chart(fig_trend, use_container_width=True, config={'displayModeBar': False})
+        
+    with chart_col2:
+        st.subheader(tr("🎯 TOP TARGETED REGIONS"))
+        regions_df = pd.DataFrame({
+            'Region': ['North America', 'Europe', 'Asia Pacific', 'Latin America', 'Middle East'],
+            'Incidents': [8540, 6210, 5430, 2100, 1850]
+        })
+        fig_bar = px.bar(
+            regions_df, x='Incidents', y='Region', orientation='h',
+            color='Incidents', color_continuous_scale=[(0, "#00f0ff"), (1, "#00ff41")]
+        )
+        fig_bar.update_layout(
+            margin={'l': 0, 'r': 0, 't': 10, 'b': 0}, height=250,
+            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+            coloraxis_showscale=False,
+            xaxis={'showgrid': True, 'gridcolor': "#1a2639", 'color': "#586069"},
+            yaxis={'showgrid': False, 'color': "#e6edf3", 'categoryorder': 'total ascending'}
+        )
+        st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
+        
     st.markdown("<br>", unsafe_allow_html=True)
     
     # ── Alert Grid ────────────────────────────────────────────────────────────
