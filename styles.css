@@ -202,27 +202,34 @@ div[data-testid="stChatMessage"]:nth-child(even) {
 /* Floating Chatbot UI Customization */
 div[data-testid="stPopover"] {
     position: fixed !important;
-    bottom: 30px;
-    right: 30px;
-    z-index: 99999;
+    bottom: 20px !important;
+    right: 20px !important;
+    z-index: 99999 !important;
 }
 
-div[data-testid="stPopover"] > button {
+div[data-testid="stPopover"] button {
     border-radius: 50% !important;
-    width: 70px !important;
-    height: 70px !important;
+    width: 60px !important;
+    height: 60px !important;
+    padding: 0 !important;
+    margin: 0 !important;
     background: linear-gradient(135deg, var(--neon-cyan), var(--neon-green)) !important;
-    box-shadow: 0 0 20px var(--neon-cyan) !important;
+    box-shadow: 0 0 15px var(--neon-cyan) !important;
     border: none !important;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 28px !important; /* Robot emoji size */
     transition: transform 0.3s ease, box-shadow 0.3s ease !important;
 }
 
-div[data-testid="stPopover"] > button:hover {
+div[data-testid="stPopover"] button::before {
+    display: none !important;
+}
+
+div[data-testid="stPopover"] button:hover {
     transform: scale(1.1) !important;
-    box-shadow: 0 0 35px var(--neon-green) !important;
+    box-shadow: 0 0 25px var(--neon-green) !important;
 }
 
 /* Make Popover Body Look Cyberpunk */
