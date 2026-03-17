@@ -557,21 +557,46 @@ with st.sidebar:
     st.title(tr("🛡️ KAVACH"))
     st.markdown("---")
 
+    def toggle_theme():
+        st.session_state.dark_mode = not st.session_state.dark_mode
+
     is_dark = st.session_state.dark_mode
-    if st.toggle("🌙 Dark Mode" if is_dark else "☀️ Light Mode", value=is_dark, key="_dark_toggle"):
-        st.session_state.dark_mode = True
-    else:
-        st.session_state.dark_mode = False
+    st.toggle("🌙 Dark Mode" if is_dark else "☀️ Light Mode", value=is_dark, key="theme_toggle_btn", on_change=toggle_theme)
 
     if st.session_state.dark_mode:
         st.markdown("""<style>.main{background-color:#050505!important;color:#f0f6fc!important;}
             section[data-testid="stSidebar"]{background:linear-gradient(180deg,#0a0a0a 0%,#12161c 100%)!important;}</style>""",
             unsafe_allow_html=True)
     else:
-        st.markdown("""<style>.main{background-color:#f0f4f8!important;color:#0d1117!important;}
-            h1,h2,h3{color:#00699e!important;text-shadow:none!important;}
-            section[data-testid="stSidebar"]{background:linear-gradient(180deg,#dce3ea 0%,#c8d0d9 100%)!important;}
-            .stApp{background:#f0f4f8!important;}p,span,label,div{color:#0d1117!important;}</style>""",
+        st.markdown("""<style>
+            .main { background-color:#f0f4f8!important; color:#0d1117!important; }
+            h1,h2,h3 { color:#00699e!important; text-shadow:none!important; }
+            section[data-testid="stSidebar"] { background:linear-gradient(180deg,#dce3ea 0%,#c8d0d9 100%)!important; }
+            .stApp { background:#f0f4f8!important; }
+            p,span,label,div { color:#0d1117!important; }
+            
+            /* Override hardcoded dark elements for light mode readability */
+            div[data-testid="stVerticalBlock"] > div > div > div[data-testid="stVerticalBlock"],
+            .sidebar-log-card, .risk-meter-container, 
+            div[data-testid="stChatMessage"], div[data-testid="stPopoverBody"] {
+                background: #ffffff !important;
+                border-color: #c8d0d9 !important;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;
+                color: #0d1117 !important;
+            }
+            
+            /* Target inline styled dark backgrounds */
+            div[style*="background:rgba(10,15,25"],
+            div[style*="background:rgba(10, 15, 25"] {
+                background: #ffffff !important;
+                border-color: #c8d0d9 !important;
+            }
+            div[style*="color:#e6edf3"] {
+                color: #0d1117 !important;
+            }
+            .hud-exit-btn button { border-color: #ff2a2a !important; color: #ff2a2a !important; }
+            .sc, .sci { background: #ffffff !important; border-color: #c8d0d9 !important; }
+            </style>""",
             unsafe_allow_html=True)
 
     st.markdown("---")
