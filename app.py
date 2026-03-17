@@ -992,41 +992,29 @@ with st.popover(" ",use_container_width=False):
     if st.session_state.chat_history[-1]["role"]=="assistant" and len(st.session_state.chat_history)>1:
         st.markdown(text_to_speech(tr(st.session_state.chat_history[-1]["content"]),get_lang_code()),unsafe_allow_html=True)
     
-    # ── Custom Chat Input Area ──
+    # ── Chat Input Area ──
     if "chat_draft" not in st.session_state:
         st.session_state.chat_draft = ""
-        
+
     def submit_chat():
         user_msg = st.session_state.chat_draft
         if user_msg.strip():
-            st.session_state.chat_history.append({"role":"user","content":user_msg})
-            st.session_state.chat_history.append({"role":"assistant","content":generate_bot_response(user_msg)})
-            st.session_state.chat_draft = "" # Clear draft after sending
+            st.session_state.chat_history.append({"role": "user", "content": user_msg})
+            st.session_state.chat_history.append({"role": "assistant", "content": generate_bot_response(user_msg)})
+            st.session_state.chat_draft = ""
 
-    from streamlit_mic_recorder import speech_to_text
-    
-    col_input, col_mic, col_btn = st.columns([6, 1, 1])
-    
-    with col_mic:
-        st.markdown("<div style='margin-top: 15px; margin-left: -15px;'>", unsafe_allow_html=True)
-        # We capture the audio text
-        audio_text = speech_to_text(start_prompt="🎙️", stop_prompt="🛑", language='en', use_container_width=True, just_once=True, key='STT')
-        st.markdown("</div>", unsafe_allow_html=True)
-        
-    if audio_text:
-        # If audio just came in, populate the draft
-        st.session_state.chat_draft = audio_text
-
+    col_input, col_btn = st.columns([7, 1])
     with col_input:
-        # The text input takes default value from session state
-        st.text_input(tr("Ask about cybersecurity..."), key="chat_draft", on_change=submit_chat, label_visibility="collapsed")
-        
+        st.text_input(
+            tr("Ask about cybersecurity..."),
+            key="chat_draft",
+            on_change=submit_chat,
+            label_visibility="collapsed",
+        )
     with col_btn:
-        st.markdown("<div style='margin-top: 0px;'>", unsafe_allow_html=True)
         if st.button("➤", use_container_width=True):
             submit_chat()
             st.rerun()
-        st.markdown("</div>", unsafe_allow_html=True)
 
 # ── Footer ────────────────────────────────────────────────────────────────────
 st.markdown("---")
