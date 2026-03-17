@@ -1,0 +1,11 @@
+label,url,domain_age_days,has_ssl,url_length,suspicious_chars,text_content,sender_domain
+1,http://login-paypal-update.com/verify,12,0,45,3,"Dear customer, your account will be suspended. Click here to verify your identity.","support@paypal-update.com"
+0,https://www.paypal.com,5200,1,22,0,"Send money, pay online or set up a merchant account with PayPal.","service@paypal.com"
+1,http://amazon-security-alert.xyz,5,0,32,2,"Urgent: Your recent Amazon order #98234 could not be shipped. Update billing info.","no-reply@amazon-security-alert.xyz"
+0,https://www.amazon.com/gp/css/homepage.html,8500,1,43,0,"Your Account. Track orders, manage settings, and more.","shipment-tracking@amazon.com"
+1,http://192.168.1.45/login.php,0,0,28,4,"Please enter your Microsoft 365 credentials to view the secure document.","it-desk@unknown-domain.net"
+1,https://netflix-billing-issue.net,2,1,33,1,"Your Netflix subscription has expired. Update your payment method immediately to continue watching.","billing@netflix-billing-issue.net"
+0,https://www.netflix.com/youraccount,4800,1,35,0,"Manage your Netflix account, update billing, and view streaming history.","info@mailer.netflix.com"
+1,sms://+1234567890,0,0,0,0,"USPS: Your package is stuck at the sorting facility. Click here to pay the $1.99 redelivery fee: http://usps-redelivery.link","+1234567890"
+0,https://tools.usps.com/go/TrackConfirmAction,6000,1,44,0,"Track your USPS package status and delivery updates.","auto-reply@usps.com"
+1,http://free-iphone-winner.tk,1,0,28,1,"Congratulations! You've been selected as our 1 millionth visitor. Claim your free iPhone now!","prize-claim@free-iphone-winner.tk"

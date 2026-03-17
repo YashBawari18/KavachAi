@@ -531,21 +531,46 @@ def text_to_speech(text: str, lang_code: str):
     except Exception:
         return ""
 
+import google.generativeai as genai
+import os
+
+# Try to configure Gemini if key is present
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
+
 def generate_bot_response(user_input: str) -> str:
+    if GEMINI_API_KEY:
+        try:
+            model = genai.GenerativeModel('gemini-1.5-flash')
+            prompt = f"You are Kavach AI, a highly advanced, professional, and slightly futuristic cybersecurity command center AI assistant. Answer the following user query concisely and helpfully regarding cybersecurity: {user_input}"
+            response = model.generate_content(prompt)
+            return response.text
+        except Exception as e:
+            pass # Fallback below
+
+    # Fallback to regex if no API key or API fails
     txt = user_input.lower()
+    response_msg = ""
     if any(w in txt for w in ["password", "hacked", "breach"]):
-        return "If you suspect a hack, immediately change your passwords using a different device. Enable Two-Factor Authentication (2FA) on all critical accounts, and monitor your bank statements."
+        response_msg = "If you suspect a hack, immediately change your passwords using a different device. Enable Two-Factor Authentication (2FA) on all critical accounts, and monitor your bank statements."
     elif any(w in txt for w in ["phishing", "fake email", "link"]):
-        return "Phishing attempts try to steal your credentials. Do not click links or download attachments. Always verify the sender's email address and navigate to the official website manually."
+        response_msg = "Phishing attempts try to steal your credentials. Do not click links or download attachments. Always verify the sender's email address and navigate to the official website manually."
     elif any(w in txt for w in ["deepfake", "ai video", "fake voice"]):
-        return "Deepfakes are highly realistic AI media. Look for unnatural blinking, mismatched lip-syncing, or a robotic tone. Verify the person's identity via another communication channel."
+        response_msg = "Deepfakes are highly realistic AI media. Look for unnatural blinking, mismatched lip-syncing, or a robotic tone. Verify the person's identity via another communication channel."
     elif any(w in txt for w in ["virus", "malware", "ransomware"]):
-        return "Disconnect the infected device from the internet immediately to prevent spread. Run a full system scan using a trusted antivirus like Windows Defender or Malwarebytes."
+        response_msg = "Disconnect the infected device from the internet immediately to prevent spread. Run a full system scan using a trusted antivirus like Windows Defender or Malwarebytes."
     elif any(w in txt for w in ["safe", "secure"]):
-        return "To stay safe: Use complex passwords, enable 2FA, keep your software updated, and never trust unexpected messages creating a false sense of urgency."
+        response_msg = "To stay safe: Use complex passwords, enable 2FA, keep your software updated, and never trust unexpected messages creating a false sense of urgency."
     elif any(w in txt for w in ["hello", "hi", "hey"]):
-        return "Hello! I am your Kavach AI Security Assistant. How can I help secure your digital life today?"
-    return "I am an AI trained specifically for cybersecurity. I can help you analyze threats, secure your accounts, and identify phishing or deepfakes. What specific security concern do you have?"
+        response_msg = "Hello! I am your Kavach AI Security Assistant. How can I help secure your digital life today?"
+    else:
+        response_msg = "I am an AI trained specifically for cybersecurity. I can help you analyze threats, secure your accounts, and identify phishing or deepfakes. What specific security concern do you have?"
+
+    if not GEMINI_API_KEY:
+        response_msg += "\n\n*(Note: Currently running in offline rule-based mode. To enable dynamic generative AI, add a `GEMINI_API_KEY` to your environment variables or a `.env` file.)*"
+        
+    return response_msg
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
@@ -966,11 +991,42 @@ with st.popover(" ",use_container_width=False):
                 st.write(tr(msg["content"]))
     if st.session_state.chat_history[-1]["role"]=="assistant" and len(st.session_state.chat_history)>1:
         st.markdown(text_to_speech(tr(st.session_state.chat_history[-1]["content"]),get_lang_code()),unsafe_allow_html=True)
-    chat_input=st.chat_input(tr("Ask about cybersecurity, threats..."))
-    if chat_input:
-        st.session_state.chat_history.append({"role":"user","content":chat_input})
-        st.session_state.chat_history.append({"role":"assistant","content":generate_bot_response(chat_input)})
-        st.rerun()
+    
+    # ── Custom Chat Input Area ──
+    if "chat_draft" not in st.session_state:
+        st.session_state.chat_draft = ""
+        
+    def submit_chat():
+        user_msg = st.session_state.chat_draft
+        if user_msg.strip():
+            st.session_state.chat_history.append({"role":"user","content":user_msg})
+            st.session_state.chat_history.append({"role":"assistant","content":generate_bot_response(user_msg)})
+            st.session_state.chat_draft = "" # Clear draft after sending
+
+    from streamlit_mic_recorder import speech_to_text
+    
+    col_input, col_mic, col_btn = st.columns([6, 1, 1])
+    
+    with col_mic:
+        st.markdown("<div style='margin-top: 15px; margin-left: -15px;'>", unsafe_allow_html=True)
+        # We capture the audio text
+        audio_text = speech_to_text(start_prompt="🎙️", stop_prompt="🛑", language='en', use_container_width=True, just_once=True, key='STT')
+        st.markdown("</div>", unsafe_allow_html=True)
+        
+    if audio_text:
+        # If audio just came in, populate the draft
+        st.session_state.chat_draft = audio_text
+
+    with col_input:
+        # The text input takes default value from session state
+        st.text_input(tr("Ask about cybersecurity..."), key="chat_draft", on_change=submit_chat, label_visibility="collapsed")
+        
+    with col_btn:
+        st.markdown("<div style='margin-top: 0px;'>", unsafe_allow_html=True)
+        if st.button("➤", use_container_width=True):
+            submit_chat()
+            st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
 
 # ── Footer ────────────────────────────────────────────────────────────────────
 st.markdown("---")
