@@ -10,3 +10,4 @@ gTTS
 Pillow
 deep-translator
 plotly
+google-generativeai
